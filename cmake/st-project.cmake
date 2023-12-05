@@ -87,12 +87,21 @@ target_link_options(
 
 target_sources(
     ${TARGET_NAME} PRIVATE
+    "Core/Src/can_smbus/cs_id.c"
+    "Core/Src/can_smbus/cs_io.c"
+    "Core/Src/can_smbus/cs_led.c"
+    "Core/Src/can_smbus/cs_timer.c"
+    "Core/Src/can_smbus/cs_type.c"
+    "Core/Src/fdcan.c"
+    "Core/Src/gpio.c"
     "Core/Src/main.c"
     "Core/Src/stm32g4xx_hal_msp.c"
     "Core/Src/stm32g4xx_it.c"
     "Core/Src/syscalls.c"
     "Core/Src/sysmem.c"
     "Core/Src/system_stm32g4xx.c"
+    "Core/Src/tim.c"
+    "Core/Src/user_task.c"
     "Core/Startup/startup_stm32g431k8tx.s"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma_ex.c"
