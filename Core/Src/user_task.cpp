@@ -81,7 +81,9 @@ void UserTask_loop(void)
 							g_count_reg.rot_count++;
 						}
 					}
-				}
+				}else{
+                    CSLed_err();
+                }
 			}else{
 				CSLed_err();
 			}
