@@ -47,7 +47,7 @@ void UserTask_setup(void)
     }
 
     CSTimer_start(&g_tim);
-    // CSIo_bind(CSType_appid_AMT212B, UserTask_canCallback);
+    CSIo_bind(CSType_appid_AMT212B, UserTask_canCallback);
     CSTimer_bind(UserTask_timerCallback);
 }
 
@@ -61,7 +61,7 @@ void UserTask_loop(void)
         uint8_t rx_data[2] = {0};
         if(HAL_UART_Transmit(&huart2, &g_id, 1, 10) == HAL_OK)
         {
-        	if(HAL_UART_Receive(&huart2, rx_data, 2, 10) == HAL_OK)
+            if(HAL_UART_Receive(&huart2, rx_data, 2, 10) == HAL_OK)
 			{
 				if(UserTask_checksum(rx_data[0], rx_data[1]))
 				{
@@ -89,7 +89,7 @@ void UserTask_loop(void)
 			}
         }
 
-        // CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
+        CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
     }
 }
 
