@@ -100,7 +100,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   CSLed_init();
   CSTimer_init();
-  // CSIo_init(&hcan2);
+  CSIo_init();
   UserTask_setup();
   /* USER CODE END 2 */
 
@@ -108,7 +108,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    CSType_bool_t is_safety_on = CSTYPE_TRUE;//CSIo_isSafetyOn();
+    CSType_bool_t is_safety_on = CSIo_isSafetyOn();
     if(is_safety_on == 0)
     {
       UserTask_loop();

@@ -15,17 +15,19 @@
 extern "C" {
 #endif
 
-// typedef CSType_bool_t (*CSIo_callback_t)(CSReg_t reg, const uint8_t* data, size_t len);
+#define CSIO_HCAN ((&hfdcan1))
 
-// void CSIo_init(CAN_HandleTypeDef* hcan);
+typedef CSType_bool_t (*CSIo_callback_t)(CSReg_t reg, const uint8_t* data, size_t len);
 
-// void CSIo_bind(CSType_appid_t appid, CSIo_callback_t callback);
+void CSIo_init(void);
 
-// void CSIo_sendUser(CSType_reg_t reg, const uint8_t* data, uint8_t len);
+void CSIo_bind(CSType_appid_t appid, CSIo_callback_t callback);
 
-// CSType_bool_t CSIo_isSafetyOn(void);
+void CSIo_sendUser(CSType_reg_t reg, const uint8_t* data, uint8_t len);
 
-// void CSIo_process(void);
+CSType_bool_t CSIo_isSafetyOn(void);
+
+void CSIo_process(void);
 
 #ifdef __cplusplus
 }
