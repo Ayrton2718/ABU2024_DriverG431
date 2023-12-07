@@ -40,8 +40,9 @@ void CSIo_init(void)
 {
     g_my_id = (CSId_getId() & 0b01111);
 
-    CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO0, g_my_id << 6,  0b11111 << 6); // m2s registers
-    CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO1, 0x00000 << 6,  0b11111 << 6); // broad cast
+	CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO0, 0x000,  0x000);
+//    CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO0, g_my_id << 6,  0b11111 << 6); // m2s registers
+//    CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO1, 0x00000 << 6,  0b11111 << 6); // broad cast
 
     if (HAL_FDCAN_Start(CSIO_HCAN) != HAL_OK){ 
         Error_Handler();
@@ -52,10 +53,10 @@ void CSIo_init(void)
         Error_Handler();
     }
 
-    if (HAL_FDCAN_ActivateNotification(CSIO_HCAN, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0) != HAL_OK)
-    {
-        Error_Handler();
-    }
+//    if (HAL_FDCAN_ActivateNotification(CSIO_HCAN, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0) != HAL_OK)
+//    {
+//        Error_Handler();
+//    }
 
     g_appid = CSType_appid_UNKNOWN;
     g_callback = CSIo_dummyCallback;
@@ -84,7 +85,6 @@ void CSIo_sendUser(CSType_reg_t reg, const uint8_t* data, uint8_t len)
 static void CSIo_send(CSType_reg_t reg, const uint8_t* data, uint8_t len)
 {
     CSIo_packet_t packet;
-    uint32_t TxMailbox;
 
     packet.header.TxFrameType = FDCAN_DATA_FRAME;
     packet.header.IdType = FDCAN_STANDARD_ID;
@@ -129,7 +129,6 @@ void CSIo_process(void)
     size_t send_count = g_send_count;
     for(size_t i = 0; (i < send_count) && (HAL_FDCAN_GetTxFifoFreeLevel(CSIO_HCAN) != 0); i++)
     {
-        uint32_t TxMailbox;
         CSIo_packet_t packet = g_send_buffer[g_send_rp & CS_IO_SEND_BUFFER];
         if(HAL_FDCAN_AddMessageToTxFifoQ(CSIO_HCAN, &packet.header, packet.tx_data) == HAL_OK)
         {
@@ -155,51 +154,82 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
             uint32_t can_id = RxHeader.Identifier;
             uint8_t len = RxHeader.DataLength >> 16;
 
-            if(CSTYPE_IS_SYS_REG(can_id))
+            if(CSTYPE_IS_BRC_PACKET(can_id))
+			{
+				CSType_reg_t reg = CSTYPE_GET_BRC_REG(can_id);
+				switch (reg)
+				{
+				case CSType_brcReg_Safety:
+					g_safety_time = HAL_GetTick() + 500;
+					CSLed_rx();
+					break;
+
+				case CSType_brcReg_Unsafe:
+					if(len == 4)
+					{
+						if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
+						{
+							g_safety_time = 0;
+							CSLed_rx();
+						}
+					}
+					break;
+
+				case CSType_brcReg_ChipInit:
+					break;
+
+				default:
+					break;
+				}
+			}
+            else if(CSTYPE_IS_M2S_PACKET(can_id))
             {
-                CSType_reg_t reg = CSTYPE_GET_SYS_REG(can_id);
-                if(CSTYPE_IS_ACK_REG(can_id))
-                {
-                    CSType_ack_t ack;
-                    ack.checksum = 0;
-                    for(size_t i = 0; i < len; i++)
-                    {
-                        ack.checksum += data[i];
-                    }
-                    CSIo_send(CSTYPE_MAKE_ACK_REG(CSTYPE_MAKE_SYS_REG(reg)), (const uint8_t*)&ack, sizeof(CSType_ack_t));
-                }
+            	if(CSTYPE_IS_SYS_REG(can_id))
+				{
+					CSType_reg_t reg = CSTYPE_GET_SYS_REG(can_id);
+					if(CSTYPE_IS_ACK_REG(can_id))
+					{
+						CSType_ack_t ack;
+						ack.checksum = 0;
+						for(size_t i = 0; i < len; i++)
+						{
+							ack.checksum += data[i];
+						}
+						CSIo_send(CSTYPE_MAKE_ACK_REG(CSTYPE_MAKE_SYS_REG(reg)), (const uint8_t*)&ack, sizeof(CSType_ack_t));
+					}
 
-                switch(reg)
-                {
-                case CSReg_m2sSystem_REQ_APPID:{
-                    uint8_t appid = (uint8_t)g_appid;
-                    CSIo_send(CSTYPE_MAKE_WRITE_REG(CSTYPE_MAKE_SYS_REG(CSReg_s2mSystem_APPID)), &appid, sizeof(uint8_t));
-                    CSLed_rx();
-                    }break;
+					switch(reg)
+					{
+					case CSReg_m2sSystem_REQ_APPID:{
+						uint8_t appid = (uint8_t)g_appid;
+						CSIo_send(CSTYPE_MAKE_WRITE_REG(CSTYPE_MAKE_SYS_REG(CSReg_s2mSystem_APPID)), &appid, sizeof(uint8_t));
+						CSLed_rx();
+						}break;
 
-                default:
-                    break;
-                }
+					default:
+						break;
+					}
+				}
+				else
+				{
+					CSType_reg_t reg = CSTYPE_GET_USER_REG(can_id);
+					if(CSTYPE_IS_ACK_REG(can_id))
+					{
+						CSType_ack_t ack;
+						ack.checksum = 0;
+						for(size_t i = 0; i < len; i++)
+						{
+							ack.checksum += data[i];
+						}
+						CSIo_send(CSTYPE_MAKE_ACK_REG(CSTYPE_MAKE_USER_REG(reg)), (const uint8_t*)&ack, sizeof(CSType_ack_t));
+					}
+
+					if(g_callback(reg, data, len))
+					{
+						CSLed_rx();
+					}
+				}
             }
-            else
-            {
-                CSType_reg_t reg = CSTYPE_GET_USER_REG(can_id);
-                if(CSTYPE_IS_ACK_REG(can_id))
-                {
-                    CSType_ack_t ack;
-                    ack.checksum = 0;
-                    for(size_t i = 0; i < len; i++)
-                    {
-                        ack.checksum += data[i];
-                    }
-                    CSIo_send(CSTYPE_MAKE_ACK_REG(CSTYPE_MAKE_USER_REG(reg)), (const uint8_t*)&ack, sizeof(CSType_ack_t));
-                }
-
-                if(g_callback(reg, data, len))
-                {
-                    CSLed_rx();
-                }
-            }	
         }else{
             CSLed_err();
         }
@@ -208,51 +238,51 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
 
 // BRC
-void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
-{
-    if((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != 0)
-    {
-        FDCAN_RxHeaderTypeDef   RxHeader;
-        uint8_t data[8];
-
-        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &RxHeader, data) == HAL_OK)
-        {
-            uint32_t can_id = RxHeader.Identifier;
-            uint8_t len = RxHeader.DataLength >> 16;
-
-            if(CSTYPE_IS_BRC_PACKET(can_id))
-            {
-                CSType_reg_t reg = CSTYPE_GET_BRC_REG(can_id);
-                switch (reg)
-                {
-                case CSType_brcReg_Safety:
-                    g_safety_time = HAL_GetTick() + 500;
-                    CSLed_rx();
-                    break;
-                
-                case CSType_brcReg_Unsafe:
-                    if(len == 4)
-                    {
-                        if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
-                        {
-                            g_safety_time = 0;
-                            CSLed_rx();
-                        }
-                    }
-                    break;
-
-                case CSType_brcReg_ChipInit:
-                    break;
-
-                default:
-                    break;
-                }
-            }
-        }else{
-            CSLed_err();
-        }
-    }
-}
+//void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
+//{
+//    if((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != 0)
+//    {
+//        FDCAN_RxHeaderTypeDef   RxHeader;
+//        uint8_t data[8];
+//
+//        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &RxHeader, data) == HAL_OK)
+//        {
+//            uint32_t can_id = RxHeader.Identifier;
+//            uint8_t len = RxHeader.DataLength >> 16;
+//
+//            if(CSTYPE_IS_BRC_PACKET(can_id))
+//            {
+//                CSType_reg_t reg = CSTYPE_GET_BRC_REG(can_id);
+//                switch (reg)
+//                {
+//                case CSType_brcReg_Safety:
+//                    g_safety_time = HAL_GetTick() + 500;
+//                    CSLed_rx();
+//                    break;
+//
+//                case CSType_brcReg_Unsafe:
+//                    if(len == 4)
+//                    {
+//                        if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
+//                        {
+//                            g_safety_time = 0;
+//                            CSLed_rx();
+//                        }
+//                    }
+//                    break;
+//
+//                case CSType_brcReg_ChipInit:
+//                    break;
+//
+//                default:
+//                    break;
+//                }
+//            }
+//        }else{
+//            CSLed_err();
+//        }
+//    }
+//}
 
 
 static void CSIo_setFilterMask(uint32_t fifo_id, uint16_t id1, uint16_t mask1)

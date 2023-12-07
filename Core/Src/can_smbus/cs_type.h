@@ -36,7 +36,7 @@ typedef uint16_t CSType_reg_t;
 #define CSTYPE_MAKE_S2M_CAN_ID(id, reg) (0b10000000000 | CSTYPE_MAKE_M2S_CAN_ID(id, reg))
 
 #define CSTYPE_GET_PACKET_ID(can_id)    ((can_id & 0b01111000000) >> 6)
-#define CSTYPE_GET_PACKET_REG(can_id)   (can_id & 0b0000111111)
+#define CSTYPE_GET_PACKET_REG(can_id)   ((can_id & 0b00000111111))
 
 #define CSTYPE_GET_BRC_REG(reg)         (reg & 0b011111)
 #define CSTYPE_GET_USER_REG(reg)        (reg & 0b011111)
@@ -73,9 +73,9 @@ typedef enum{
 
 typedef enum
 {
-	CSType_brcReg_Safety    = 0b010000,
-	CSType_brcReg_Unsafe    = 0b010001,
-	CSType_brcReg_ChipInit  = 0b010010
+	CSType_brcReg_Safety    = 0b000001,
+	CSType_brcReg_Unsafe    = 0b000010,
+	CSType_brcReg_ChipInit  = 0b000011
 } CSType_brcReg_t;
 
 typedef enum{

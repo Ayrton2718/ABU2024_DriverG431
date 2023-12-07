@@ -2,10 +2,13 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
+FDCAN1.AutoRetransmission=ENABLE
 FDCAN1.CalculateBaudRateNominal=1000000
 FDCAN1.CalculateTimeBitNominal=1000
 FDCAN1.CalculateTimeQuantumNominal=62.5
-FDCAN1.IPParameters=CalculateTimeQuantumNominal,CalculateTimeBitNominal,CalculateBaudRateNominal,NominalTimeSeg1,NominalPrescaler
+FDCAN1.DataTimeSeg1=1
+FDCAN1.DataTimeSeg2=1
+FDCAN1.IPParameters=CalculateTimeQuantumNominal,CalculateTimeBitNominal,CalculateBaudRateNominal,NominalTimeSeg1,NominalPrescaler,AutoRetransmission,DataTimeSeg1,DataTimeSeg2
 FDCAN1.NominalPrescaler=4
 FDCAN1.NominalTimeSeg1=13
 File.Version=6

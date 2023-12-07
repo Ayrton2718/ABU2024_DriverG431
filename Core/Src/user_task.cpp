@@ -3,6 +3,9 @@
 
 #include "usart.h"
 
+#define RS485_HUART ((&huart2))
+#define AMT212B_ID 	(0x54)
+
 extern "C" {
 
 typedef struct{
@@ -17,34 +20,16 @@ static void UserTask_timerCallback(void);
 static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte);
 
 static count_t g_count_reg;
-
-static uint8_t  g_id = 0x54;
+static uint8_t  g_id;
 
 static CSTimer_t g_tim;
 
 
 void UserTask_setup(void)
 {
-    bool is_available = false;
+	g_id = AMT212B_ID;
     g_count_reg.rot_count = 0;
     g_count_reg.angle = 0;
-
-    uint8_t rx_data[2] = {0};
-    HAL_UART_Transmit(&huart2, &g_id, 1, 100);
-    if(HAL_UART_Receive(&huart2, rx_data, 2, 100) == HAL_OK)
-    {
-        if(UserTask_checksum(rx_data[0], rx_data[1]))
-        {
-            uint16_t data = ((rx_data[1] & 0x3F) << 8 | rx_data[0]);
-            g_count_reg.angle = data;
-            is_available = true;
-        }
-    }
-
-    if(is_available == false)
-    {
-        CSLed_err();
-    }
 
     CSTimer_start(&g_tim);
     CSIo_bind(CSType_appid_AMT212B, UserTask_canCallback);
@@ -59,9 +44,9 @@ void UserTask_loop(void)
         CSTimer_start(&g_tim);
 
         uint8_t rx_data[2] = {0};
-        if(HAL_UART_Transmit(&huart2, &g_id, 1, 10) == HAL_OK)
+        if(HAL_UART_Transmit(RS485_HUART, &g_id, 1, 10) == HAL_OK)
         {
-            if(HAL_UART_Receive(&huart2, rx_data, 2, 10) == HAL_OK)
+            if(HAL_UART_Receive(RS485_HUART, rx_data, 2, 10) == HAL_OK)
 			{
 				if(UserTask_checksum(rx_data[0], rx_data[1]))
 				{
@@ -87,6 +72,8 @@ void UserTask_loop(void)
 			}else{
 				CSLed_err();
 			}
+        }else{
+			CSLed_err();
         }
 
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
