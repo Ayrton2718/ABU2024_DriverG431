@@ -160,7 +160,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 				switch (reg)
 				{
 				case CSType_brcReg_Safety:
-					g_safety_time = HAL_GetTick() + 500;
+					g_safety_time = HAL_GetTick() + CSTYPE_SAFETY_TIMEOUT;
 					CSLed_rx();
 					break;
 
@@ -184,7 +184,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 			}
             else if(CSTYPE_IS_M2S_PACKET(can_id))
             {
-            	if(CSTYPE_IS_SYS_REG(can_id))
+                if(CSTYPE_IS_SYS_REG(can_id))
 				{
 					CSType_reg_t reg = CSTYPE_GET_SYS_REG(can_id);
 					if(CSTYPE_IS_ACK_REG(can_id))

@@ -8,7 +8,6 @@
 #ifndef SRC_CAN_SMBUS_CS_TYPE_H_
 #define SRC_CAN_SMBUS_CS_TYPE_H_
 
-#include "main.h"
 #include <stdint.h>
 #include <string.h>
 

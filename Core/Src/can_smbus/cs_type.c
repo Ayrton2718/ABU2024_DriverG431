@@ -14,7 +14,7 @@ uint16_t CSId_convertId2Num(CSId_t id)
 
 CSId_t CSId_convertNum2Id(uint8_t num)
 {
-    if(0 <= num && num <= 5)
+    if(num <= 5)
     {
         return num + CSId_1;
     }else if(6 <= num && num <= 11){
