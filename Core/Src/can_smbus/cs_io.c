@@ -24,7 +24,7 @@ uint8_t         g_send_rp;
 uint8_t         g_send_count;
 CSIo_packet_t   g_send_buffer[CS_IO_SEND_BUFFER];
 
-static CSType_id_t   g_my_id;
+static uint16_t   g_my_id;
 static CSType_appid_t g_appid;
 static CSIo_callback_t g_callback;
 
@@ -33,7 +33,7 @@ static uint32_t g_safety_time;
 
 static void CSIo_setFilterMask(uint32_t fifo_id, uint16_t id1, uint16_t mask1);
 static CSType_bool_t CSIo_dummyCallback(CSReg_t reg, const uint8_t* data, size_t len){return CSTYPE_FALSE;}
-static void CSIo_send(CSType_reg_t reg, const uint8_t* data, uint8_t len);
+static void CSIo_send(uint16_t reg, const uint8_t* data, uint8_t len);
 
 
 void CSIo_init(void)
@@ -76,13 +76,13 @@ void CSIo_bind(CSType_appid_t appid, CSIo_callback_t callback)
     g_callback = callback;
 }
 
-void CSIo_sendUser(CSType_reg_t reg, const uint8_t* data, uint8_t len)
+void CSIo_sendUser(CSReg_t reg, const uint8_t* data, uint8_t len)
 {
     CSIo_send(CSTYPE_MAKE_WRITE_REG(CSTYPE_MAKE_USER_REG(reg)), data, len);
 }
 
 
-static void CSIo_send(CSType_reg_t reg, const uint8_t* data, uint8_t len)
+static void CSIo_send(uint16_t reg, const uint8_t* data, uint8_t len)
 {
     CSIo_packet_t packet;
 
@@ -156,7 +156,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
             if(CSTYPE_IS_BRC_PACKET(can_id))
 			{
-				CSType_reg_t reg = CSTYPE_GET_BRC_REG(can_id);
+				CSType_brcReg_t reg = CSTYPE_GET_BRC_REG(CSTYPE_GET_PACKET_REG(can_id));
 				switch (reg)
 				{
 				case CSType_brcReg_Safety:
@@ -184,10 +184,10 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 			}
             else if(CSTYPE_IS_M2S_PACKET(can_id))
             {
-                if(CSTYPE_IS_SYS_REG(can_id))
+                if(CSTYPE_IS_SYS_REG(CSTYPE_GET_PACKET_REG(can_id)))
 				{
-					CSType_reg_t reg = CSTYPE_GET_SYS_REG(can_id);
-					if(CSTYPE_IS_ACK_REG(can_id))
+					CSReg_t reg = CSTYPE_GET_SYS_REG(CSTYPE_GET_PACKET_REG(can_id));
+					if(CSTYPE_IS_ACK_REG(CSTYPE_GET_PACKET_REG(can_id)))
 					{
 						CSType_ack_t ack;
 						ack.checksum = 0;
@@ -212,8 +212,8 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 				}
 				else
 				{
-					CSType_reg_t reg = CSTYPE_GET_USER_REG(can_id);
-					if(CSTYPE_IS_ACK_REG(can_id))
+					CSReg_t reg = CSTYPE_GET_USER_REG(CSTYPE_GET_PACKET_REG(can_id));
+					if(CSTYPE_IS_ACK_REG(CSTYPE_GET_PACKET_REG(can_id)))
 					{
 						CSType_ack_t ack;
 						ack.checksum = 0;

@@ -23,7 +23,7 @@ void CSIo_init(void);
 
 void CSIo_bind(CSType_appid_t appid, CSIo_callback_t callback);
 
-void CSIo_sendUser(CSType_reg_t reg, const uint8_t* data, uint8_t len);
+void CSIo_sendUser(CSReg_t reg, const uint8_t* data, uint8_t len);
 
 CSType_bool_t CSIo_isSafetyOn(void);
 

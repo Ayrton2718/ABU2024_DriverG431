@@ -21,35 +21,31 @@ typedef uint8_t 	CSType_bool_t;
 #define CSTYPE_TRUE 	(1)
 #define CSTYPE_BOOL_NOT(x) ((~x) & 0x01)
 
-
-typedef uint16_t CSType_id_t;
-typedef uint16_t CSType_reg_t;
-
 #define CSTYPE_SAFETY_TIMEOUT 	(500) // ms
 
-#define CSTYPE_IS_M2S_PACKET(can_id) ((can_id & 0b10000000000) == 0)
-#define CSTYPE_IS_S2M_PACKET(can_id) ((can_id & 0b10000000000) != 0)
-#define CSTYPE_IS_BRC_PACKET(can_id) ((can_id & 0b11111000000) == 0x000)
+#define CSTYPE_IS_M2S_PACKET(can_id) (((uint16_t)can_id & 0b10000000000) == 0)
+#define CSTYPE_IS_S2M_PACKET(can_id) (((uint16_t)can_id & 0b10000000000) != 0)
+#define CSTYPE_IS_BRC_PACKET(can_id) (((uint16_t)can_id & 0b11111000000) == 0x000)
 
 #define CSTYPE_MAKE_M2S_CAN_ID(id, reg) ((((uint16_t)id & 0b1111) << 6) | ((uint16_t)reg & 0b111111))
 #define CSTYPE_MAKE_S2M_CAN_ID(id, reg) (0b10000000000 | CSTYPE_MAKE_M2S_CAN_ID(id, reg))
 
-#define CSTYPE_GET_PACKET_ID(can_id)    ((can_id & 0b01111000000) >> 6)
-#define CSTYPE_GET_PACKET_REG(can_id)   ((can_id & 0b00000111111))
+#define CSTYPE_GET_PACKET_ID(can_id)    ((CSId_t)(((uint16_t)can_id & 0b01111000000) >> 6))
+#define CSTYPE_GET_PACKET_REG(can_id)   ((uint16_t)(((uint16_t)can_id & 0b00000111111)))
 
-#define CSTYPE_GET_BRC_REG(reg)         (reg & 0b011111)
-#define CSTYPE_GET_USER_REG(reg)        (reg & 0b011111)
-#define CSTYPE_GET_SYS_REG(reg)         (reg & 0b000111)
+#define CSTYPE_GET_BRC_REG(reg)         ((CSType_brcReg_t)((uint16_t)reg & 0b011111))
+#define CSTYPE_GET_USER_REG(reg)        ((CSReg_t)((uint16_t)reg & 0b011111))
+#define CSTYPE_GET_SYS_REG(reg)         ((CSReg_t)((uint16_t)reg & 0b000111))
 
-#define CSTYPE_IS_USER_REG(reg)         ((reg & 0b011000) != 0b011000)
-#define CSTYPE_IS_SYS_REG(reg)          ((reg & 0b011000) == 0b011000)
-#define CSTYPE_IS_WRITE_REG(reg)        ((reg & 0b100000) == 0)
-#define CSTYPE_IS_ACK_REG(reg)          ((reg & 0b100000) != 0)
+#define CSTYPE_IS_USER_REG(reg)         (((uint16_t)reg & 0b011000) != 0b011000)
+#define CSTYPE_IS_SYS_REG(reg)          (((uint16_t)reg & 0b011000) == 0b011000)
+#define CSTYPE_IS_WRITE_REG(reg)        (((uint16_t)reg & 0b100000) == 0)
+#define CSTYPE_IS_ACK_REG(reg)          (((uint16_t)reg & 0b100000) != 0)
 
-#define CSTYPE_MAKE_USER_REG(reg)     (reg & 0b011111)
-#define CSTYPE_MAKE_SYS_REG(reg)      (reg | 0b011000)
-#define CSTYPE_MAKE_WRITE_REG(reg)    (reg & 0b011111)
-#define CSTYPE_MAKE_ACK_REG(reg)      (reg | 0b100000)
+#define CSTYPE_MAKE_USER_REG(reg)       ((uint16_t)(reg & 0b011111))
+#define CSTYPE_MAKE_SYS_REG(reg)        ((uint16_t)(reg | 0b011000))
+#define CSTYPE_MAKE_WRITE_REG(reg)      ((uint16_t)(reg & 0b011111))
+#define CSTYPE_MAKE_ACK_REG(reg)        ((uint16_t)(reg | 0b100000))
 
 typedef struct{
     uint8_t checksum;
