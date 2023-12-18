@@ -67,7 +67,7 @@ void CSLed_hungUp(void)
 void CSLed_err(void)
 {
     HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_SET);
-    g_errStopCount = 50;
+    g_errStopCount = 20;
 }
 
 

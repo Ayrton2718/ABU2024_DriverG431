@@ -26,13 +26,15 @@ CSIo_packet_t   g_send_buffer[CS_IO_SEND_BUFFER];
 
 static uint16_t   g_my_id;
 static CSType_appid_t g_appid;
-static CSIo_callback_t g_callback;
+static CSIo_canCallback_t g_can_callback;
+static CSIo_resetCallback_t g_reset_callback;
 
 static uint32_t g_safety_time;
 
 
-static void CSIo_setFilterMask(uint32_t fifo_id, uint16_t id1, uint16_t mask1);
+static void CSIo_setFilterMask(uint32_t index, uint32_t fifo_id, uint16_t id1, uint16_t mask1);
 static CSType_bool_t CSIo_dummyCallback(CSReg_t reg, const uint8_t* data, size_t len){return CSTYPE_FALSE;}
+static void CSIo_dummyResetCallback(void){}
 static void CSIo_send(uint16_t reg, const uint8_t* data, uint8_t len);
 
 
@@ -40,26 +42,31 @@ void CSIo_init(void)
 {
     g_my_id = (CSId_getId() & 0b01111);
 
-	CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO0, 0x000,  0x000);
-//    CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO0, g_my_id << 6,  0b11111 << 6); // m2s registers
-//    CSIo_setFilterMask(FDCAN_FILTER_TO_RXFIFO1, 0x00000 << 6,  0b11111 << 6); // broad cast
+    CSIo_setFilterMask(0, FDCAN_FILTER_TO_RXFIFO0, g_my_id << 6,   0b01111 << 6); // m2s registers
+    CSIo_setFilterMask(1, FDCAN_FILTER_TO_RXFIFO1, 0b00000 << 6,   0b11111 << 6); // broad cast
+
+    if(HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
     if (HAL_FDCAN_Start(CSIO_HCAN) != HAL_OK){ 
         Error_Handler();
     }
-
+    
     if (HAL_FDCAN_ActivateNotification(CSIO_HCAN, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
     {
         Error_Handler();
     }
 
-//    if (HAL_FDCAN_ActivateNotification(CSIO_HCAN, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0) != HAL_OK)
-//    {
-//        Error_Handler();
-//    }
+    if (HAL_FDCAN_ActivateNotification(CSIO_HCAN, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
     g_appid = CSType_appid_UNKNOWN;
-    g_callback = CSIo_dummyCallback;
+    g_can_callback = CSIo_dummyCallback;
+    g_reset_callback = CSIo_dummyResetCallback;
 
     g_safety_time = 0;
 
@@ -70,10 +77,11 @@ void CSIo_init(void)
 }
 
 
-void CSIo_bind(CSType_appid_t appid, CSIo_callback_t callback)
+void CSIo_bind(CSType_appid_t appid, CSIo_canCallback_t callback, CSIo_resetCallback_t reset_callback)
 {
     g_appid = appid;
-    g_callback = callback;
+    g_can_callback = callback;
+    g_reset_callback = reset_callback;
 }
 
 void CSIo_sendUser(CSReg_t reg, const uint8_t* data, uint8_t len)
@@ -154,35 +162,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
             uint32_t can_id = RxHeader.Identifier;
             uint8_t len = RxHeader.DataLength >> 16;
 
-            if(CSTYPE_IS_BRC_PACKET(can_id))
-			{
-				CSType_brcReg_t reg = CSTYPE_GET_BRC_REG(CSTYPE_GET_PACKET_REG(can_id));
-				switch (reg)
-				{
-				case CSType_brcReg_Safety:
-					g_safety_time = HAL_GetTick() + CSTYPE_SAFETY_TIMEOUT;
-					CSLed_rx();
-					break;
-
-				case CSType_brcReg_Unsafe:
-					if(len == 4)
-					{
-						if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
-						{
-							g_safety_time = 0;
-							CSLed_rx();
-						}
-					}
-					break;
-
-				case CSType_brcReg_ChipInit:
-					break;
-
-				default:
-					break;
-				}
-			}
-            else if(CSTYPE_IS_M2S_PACKET(can_id))
+            if(CSTYPE_IS_M2S_PACKET(can_id))
             {
                 if(CSTYPE_IS_SYS_REG(CSTYPE_GET_PACKET_REG(can_id)))
 				{
@@ -224,11 +204,17 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 						CSIo_send(CSTYPE_MAKE_ACK_REG(CSTYPE_MAKE_USER_REG(reg)), (const uint8_t*)&ack, sizeof(CSType_ack_t));
 					}
 
-					if(g_callback(reg, data, len))
+					if(g_can_callback(reg, data, len))
 					{
 						CSLed_rx();
+					}else{
+                        CSLed_err();
 					}
 				}
+            }
+            else
+            {
+                CSLed_err();
             }
         }else{
             CSLed_err();
@@ -238,59 +224,66 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
 
 // BRC
-//void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
-//{
-//    if((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != 0)
-//    {
-//        FDCAN_RxHeaderTypeDef   RxHeader;
-//        uint8_t data[8];
-//
-//        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &RxHeader, data) == HAL_OK)
-//        {
-//            uint32_t can_id = RxHeader.Identifier;
-//            uint8_t len = RxHeader.DataLength >> 16;
-//
-//            if(CSTYPE_IS_BRC_PACKET(can_id))
-//            {
-//                CSType_reg_t reg = CSTYPE_GET_BRC_REG(can_id);
-//                switch (reg)
-//                {
-//                case CSType_brcReg_Safety:
-//                    g_safety_time = HAL_GetTick() + 500;
-//                    CSLed_rx();
-//                    break;
-//
-//                case CSType_brcReg_Unsafe:
-//                    if(len == 4)
-//                    {
-//                        if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
-//                        {
-//                            g_safety_time = 0;
-//                            CSLed_rx();
-//                        }
-//                    }
-//                    break;
-//
-//                case CSType_brcReg_ChipInit:
-//                    break;
-//
-//                default:
-//                    break;
-//                }
-//            }
-//        }else{
-//            CSLed_err();
-//        }
-//    }
-//}
+void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
+{
+    if((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != 0)
+    {
+        FDCAN_RxHeaderTypeDef   RxHeader;
+        uint8_t data[8];
+
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &RxHeader, data) == HAL_OK)
+        {
+            uint32_t can_id = RxHeader.Identifier;
+            uint8_t len = RxHeader.DataLength >> 16;
+
+            CSType_brcReg_t reg = CSTYPE_GET_BRC_REG(CSTYPE_GET_PACKET_REG(can_id));
+			switch (reg)
+			{
+			case CSType_brcReg_Safety:
+				g_safety_time = HAL_GetTick() + CSTYPE_SAFETY_TIMEOUT;
+				CSLed_rx();
+				break;
+
+			case CSType_brcReg_Unsafe:
+				if(len == 4)
+				{
+					if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
+					{
+						g_safety_time = 0;
+						CSLed_rx();
+					}
+				}
+				break;
+
+			case CSType_brcReg_Reset:
+                if(len == 4)
+				{
+					if((data[3] == 'R') && (data[2] == 'E') && (data[1] == 'S') && (data[0] == 'T'))
+					{
+                        g_reset_callback();
+						CSLed_rx();
+					}
+				}
+				break;
+
+			default:
+				break;
+			}
+        }
+        else
+        {
+            CSLed_err();
+        }
+    }
+}
 
 
-static void CSIo_setFilterMask(uint32_t fifo_id, uint16_t id1, uint16_t mask1)
+static void CSIo_setFilterMask(uint32_t index, uint32_t fifo_id, uint16_t id1, uint16_t mask1)
 {
 	FDCAN_FilterTypeDef filter;
     filter.IdType = FDCAN_STANDARD_ID;
     filter.FilterType = FDCAN_FILTER_MASK;
-    filter.FilterIndex = 0;
+    filter.FilterIndex = index;
     filter.FilterConfig = fifo_id;
     filter.FilterID1 = id1;
     filter.FilterID2 = mask1;

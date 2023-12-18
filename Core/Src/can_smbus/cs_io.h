@@ -17,11 +17,13 @@ extern "C" {
 
 #define CSIO_HCAN ((&hfdcan1))
 
-typedef CSType_bool_t (*CSIo_callback_t)(CSReg_t reg, const uint8_t* data, size_t len);
+typedef CSType_bool_t (*CSIo_canCallback_t)(CSReg_t reg, const uint8_t* data, size_t len);
+typedef void (*CSIo_resetCallback_t)(void);
+
 
 void CSIo_init(void);
 
-void CSIo_bind(CSType_appid_t appid, CSIo_callback_t callback);
+void CSIo_bind(CSType_appid_t appid, CSIo_canCallback_t callback, CSIo_resetCallback_t reset_callback);
 
 void CSIo_sendUser(CSReg_t reg, const uint8_t* data, uint8_t len);
 

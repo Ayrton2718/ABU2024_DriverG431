@@ -182,6 +182,7 @@ void SystemClock_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+  CSLed_hungUp();
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)

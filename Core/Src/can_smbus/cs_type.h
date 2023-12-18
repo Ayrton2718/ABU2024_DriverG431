@@ -70,7 +70,7 @@ typedef enum
 {
 	CSType_brcReg_Safety    = 0b000001,
 	CSType_brcReg_Unsafe    = 0b000010,
-	CSType_brcReg_ChipInit  = 0b000011
+	CSType_brcReg_Reset     = 0b000011
 } CSType_brcReg_t;
 
 typedef enum{

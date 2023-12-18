@@ -16,9 +16,11 @@ typedef struct{
 }
 
 static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len);
+static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte);
 
+static bool g_rst_flg;
 static count_t g_count_reg;
 static uint8_t  g_id;
 
@@ -31,8 +33,10 @@ void UserTask_setup(void)
     g_count_reg.rot_count = 0;
     g_count_reg.angle = 0;
 
+    g_rst_flg = false;
+
     CSTimer_start(&g_tim);
-    CSIo_bind(CSType_appid_AMT212B, UserTask_canCallback);
+    CSIo_bind(CSType_appid_AMT212B, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
 }
 
@@ -78,6 +82,13 @@ void UserTask_loop(void)
 
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
     }
+
+    if(g_rst_flg)
+    {
+        g_count_reg.rot_count = 0;
+        g_count_reg.angle = 0;
+        g_rst_flg = 0;
+    }
 }
 
 void UserTask_unsafeLoop(void)
@@ -85,15 +96,19 @@ void UserTask_unsafeLoop(void)
     UserTask_loop();
 }
 
-void UserTask_timerCallback(void)
+static void UserTask_timerCallback(void)
 {
 }
 
-CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len)
+static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len)
 {
     return CSTYPE_FALSE;
 }
 
+static void UserTask_resetCallback(void)
+{
+	g_rst_flg = 1;
+}
 
 static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte) {
     auto l = [&](uint8_t i) { return (bool)((low_byte >> i) & 0x01); };

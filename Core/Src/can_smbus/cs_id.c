@@ -275,7 +275,7 @@ static CSType_bool_t CSId_isPushingBtn(void)
             befor2_state = 1;
             return CSTYPE_TRUE;
         }else if(!befor1_state && befor2_state){
-            befor1_state = 1;
+            befor2_state = 1;
             return CSTYPE_TRUE;
         }else if(!befor1_state && !befor2_state){
             befor1_state = 1;
