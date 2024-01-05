@@ -15,6 +15,8 @@ static CSTimer_t g_tim;
 
 void UserTask_setup(void)
 {
+    g_rst_flg = false;
+    
     CSTimer_start(&g_tim);
     CSIo_bind(CSType_appid_UNKNOWN, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
@@ -30,6 +32,7 @@ void UserTask_loop(void)
 
     if(g_rst_flg)
     {
+        g_rst_flg = false;
     }
 }
 
