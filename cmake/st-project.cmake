@@ -87,6 +87,7 @@ target_link_options(
 
 target_sources(
     ${TARGET_NAME} PRIVATE
+    "Core/Src/BH1745NUC.cpp"
     "Core/Src/can_smbus/cs_id.c"
     "Core/Src/can_smbus/cs_io.c"
     "Core/Src/can_smbus/cs_led.c"
@@ -94,6 +95,7 @@ target_sources(
     "Core/Src/can_smbus/cs_type.c"
     "Core/Src/fdcan.c"
     "Core/Src/gpio.c"
+    "Core/Src/i2c.c"
     "Core/Src/main.c"
     "Core/Src/stm32g4xx_hal_msp.c"
     "Core/Src/stm32g4xx_it.c"
@@ -102,6 +104,7 @@ target_sources(
     "Core/Src/system_stm32g4xx.c"
     "Core/Src/tim.c"
     "Core/Src/user_task.cpp"
+    "Core/Src/veml3328.cpp"
     "Core/Startup/startup_stm32g431k8tx.s"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma_ex.c"
@@ -112,6 +115,8 @@ target_sources(
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ramfunc.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c"
+    "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c_ex.c"
+    "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c"
