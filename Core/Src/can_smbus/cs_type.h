@@ -92,6 +92,7 @@ typedef enum
     CSType_appid_AIR,
     CSType_appid_SERVO,
     CSType_appid_AMT102,
+    CSType_appid_SKY_WALKER,
     CSType_appid_UNKNOWN=255
 } CSType_appid_t;
 
