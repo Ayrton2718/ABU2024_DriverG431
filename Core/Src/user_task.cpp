@@ -92,7 +92,7 @@ void UserTask_setup(void)
 
 void UserTask_loop(void)
 {
-    if(50 < CSTimer_getMs(g_data_tim))
+    if(20 < CSTimer_getMs(g_data_tim))
     {
         CSLed_err();
     }
@@ -152,7 +152,7 @@ static void UserTask_resetCallback(void)
 
 static inline void USerTask_searchData(void)
 {
-    for(uint8_t start_i = g_last_index; start_i < 52 + g_last_index; start_i++)
+    for(uint16_t start_i = g_last_index; start_i < 52 + g_last_index; start_i++)
     {
         if(g_rx_dma[start_i % 52] == 0xA6 && g_rx_dma[(start_i + 1) % 52] == 0xA6)
         {
@@ -168,12 +168,11 @@ static inline void USerTask_searchData(void)
 
             if(checksum == g_data[data_flg][25])
             {
+                g_last_index = (start_i + 25 + 1) % 52;
                 g_data_flg = data_flg;
                 CSTimer_start(&g_data_tim);
+                break;
             }
-
-            g_last_index = start_i + 2;
-            break;
         }
     }
 }
