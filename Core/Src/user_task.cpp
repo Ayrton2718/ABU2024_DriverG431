@@ -94,10 +94,13 @@ void UserTask_loop(void)
 {
     if(20 < CSTimer_getMs(g_data_tim))
     {
+    	g_is_connecting = false;
         CSLed_err();
+    }else{
+    	g_is_connecting = true;
     }
 
-    if(1000 < CSTimer_getUs(g_tim))
+    if((1000 < CSTimer_getUs(g_tim)) && g_is_connecting)
     {
         uint8_t data_flg = (g_data_flg + 1) % 2;
         g_angle_reg.roll = g_data[data_flg][4] << 8 | g_data[data_flg][3];
