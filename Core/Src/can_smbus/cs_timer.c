@@ -1,6 +1,6 @@
 #include "cs_timer.h"
 
-static uint32_t g_ms_count;
+static volatile uint32_t g_ms_count;
 
 static CSTimer_callback_t   g_callback;
 
@@ -29,8 +29,16 @@ void CSTimer_start(CSTimer_t* tim)
 
 uint32_t CSTimer_getMs(const CSTimer_t* tim)
 {
-    register uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
-    register uint32_t now_ms = g_ms_count;
+    uint32_t now_ms;
+    uint32_t now_us;
+    do{
+        now_ms = g_ms_count;
+        now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
+        __asm__ volatile(
+            "nop\n\r"
+            "nop\n\r"
+        );
+    } while (now_ms != g_ms_count);
 
     if(tim->us < now_us)
     {
@@ -40,11 +48,18 @@ uint32_t CSTimer_getMs(const CSTimer_t* tim)
     }
 }
 
-
 uint32_t CSTimer_getUs(const CSTimer_t* tim)
 {
-    register uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
-    register uint32_t now_ms = g_ms_count;
+    uint32_t now_ms;
+    uint32_t now_us;
+    do{
+        now_ms = g_ms_count;
+        now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
+        __asm__ volatile(
+            "nop\n\r"
+            "nop\n\r"
+        );
+    } while (now_ms != g_ms_count);
 
     if(tim->us < now_us)
     {
@@ -54,30 +69,12 @@ uint32_t CSTimer_getUs(const CSTimer_t* tim)
     }
 }
 
+
 void CSTimer_delayUs(uint32_t us)
 {
     CSTimer_t start;
     CSTimer_start(&start);
-    while(1)
-    {
-        if(us <= CSTimer_getUs(&start))
-        {
-            break;
-        }
-
-        __asm__(
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-        );
-    }
+    while(CSTimer_getUs(&start) < us) {}
 }
 
 void __CSTimer_interrupt(TIM_HandleTypeDef* htim)
