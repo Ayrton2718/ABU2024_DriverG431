@@ -32,8 +32,8 @@ void CSTimer_bind(CSTimer_callback_t callback);
 
 void CSTimer_start(CSTimer_t* tim);
 
-uint32_t CSTimer_getMs(const CSTimer_t* tim);
-uint32_t CSTimer_getUs(const CSTimer_t* tim);
+uint32_t CSTimer_getMs(const CSTimer_t tim);
+uint32_t CSTimer_getUs(const CSTimer_t tim);
 
 void CSTimer_delayUs(uint32_t us);
 
