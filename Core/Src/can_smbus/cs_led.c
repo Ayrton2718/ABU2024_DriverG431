@@ -17,6 +17,7 @@ static uint8_t      g_rxStopCount;
 
 static uint8_t      g_errStopCount;
 static uint8_t      g_errFlgCount;
+static uint8_t      g_errBlinkInterval;
 
 
 void CSLed_init(void)
@@ -29,6 +30,7 @@ void CSLed_init(void)
 
     g_errStopCount = 0;
 	g_errFlgCount = 0;
+    g_errBlinkInterval = 100; // First bus err interval will be 100ms.
 
     HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
@@ -66,7 +68,13 @@ void CSLed_hungUp(void)
 
 void CSLed_err(void)
 {
+    g_errStopCount = 20;
+    g_errBlinkInterval = 10;
     HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_SET);
+}
+
+void CSLed_busErr(void)
+{
     g_errStopCount = 20;
 }
 
@@ -96,11 +104,11 @@ void CSLed_process(CSType_bool_t is_safety_on)
         if(g_errStopCount == 0)
         {
             HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET);
-            g_errFlgCount = 10;
+            g_errFlgCount = g_errBlinkInterval;
         }else{
             if(g_errFlgCount == 0)
             {
-                g_errFlgCount = 10;
+                g_errFlgCount = g_errBlinkInterval;
                 HAL_GPIO_TogglePin(LED_ERR_GPIO_Port, LED_ERR_Pin);
             }else{
                 g_errFlgCount--;
