@@ -30,7 +30,7 @@ void CSLed_init(void)
 
     g_errStopCount = 0;
 	g_errFlgCount = 0;
-    g_errBlinkInterval = 100; // First bus err interval will be 100ms.
+    g_errBlinkInterval = 50; // First bus err interval will be 100ms.
 
     HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
@@ -69,7 +69,7 @@ void CSLed_hungUp(void)
 void CSLed_err(void)
 {
     g_errStopCount = 20;
-    g_errBlinkInterval = 10;
+    g_errBlinkInterval = 5;
     HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_SET);
 }
 
