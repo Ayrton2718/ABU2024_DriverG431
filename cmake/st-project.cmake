@@ -92,6 +92,7 @@ target_sources(
     "Core/Src/can_smbus/cs_led.c"
     "Core/Src/can_smbus/cs_timer.c"
     "Core/Src/can_smbus/cs_type.c"
+    "Core/Src/dma.c"
     "Core/Src/fdcan.c"
     "Core/Src/gpio.c"
     "Core/Src/main.c"
@@ -101,6 +102,7 @@ target_sources(
     "Core/Src/sysmem.c"
     "Core/Src/system_stm32g4xx.c"
     "Core/Src/tim.c"
+    "Core/Src/usart.c"
     "Core/Src/user_task.cpp"
     "Core/Startup/startup_stm32g431k8tx.s"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c"
@@ -118,6 +120,8 @@ target_sources(
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c"
+    "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c"
+    "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c"
 )
 
