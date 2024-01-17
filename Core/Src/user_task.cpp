@@ -5,7 +5,7 @@
 
 #define UART_HANDLE ((&huart2))
 
-// #define ENABLE_ANGLE_OUT
+ #define ENABLE_ANGLE_OUT
 //#define ENABLE_GYRO_OUT
 // #define ENABLE_ACC_OUT
 
@@ -92,12 +92,12 @@ void UserTask_setup(void)
 
 void UserTask_loop(void)
 {
-    if(100 < CSTimer_getMs(&g_data_tim))
+    if(50 < CSTimer_getMs(g_data_tim))
     {
         CSLed_err();
     }
 
-    if(0 < CSTimer_getMs(&g_tim))
+    if(1000 < CSTimer_getUs(g_tim))
     {
         uint8_t data_flg = (g_data_flg + 1) % 2;
         g_angle_reg.roll = g_data[data_flg][4] << 8 | g_data[data_flg][3];
@@ -122,8 +122,6 @@ void UserTask_loop(void)
         CSIo_sendUser(CSReg_2, (const uint8_t*)&g_acc_reg, sizeof(acc_t));
 #endif /*ENABLE_ACC_OUT*/
         CSTimer_start(&g_tim);
-        CSTimer_delayUs(1000000);
-        uint32_t ms = CSTimer_getMs(&g_tim);
     }
 
     if(g_rst_flg)
@@ -154,7 +152,7 @@ static void UserTask_resetCallback(void)
 
 static inline void USerTask_searchData(void)
 {
-    for(size_t start_i = g_last_index; start_i < 52 + g_last_index; start_i++)
+    for(uint8_t start_i = g_last_index; start_i < 52 + g_last_index; start_i++)
     {
         if(g_rx_dma[start_i % 52] == 0xA6 && g_rx_dma[(start_i + 1) % 52] == 0xA6)
         {
@@ -173,6 +171,8 @@ static inline void USerTask_searchData(void)
                 g_data_flg = data_flg;
                 CSTimer_start(&g_data_tim);
             }
+
+            g_last_index = start_i + 2;
             break;
         }
     }
