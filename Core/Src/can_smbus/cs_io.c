@@ -111,14 +111,14 @@ static void CSIo_send(uint16_t reg, const uint8_t* data, uint8_t len)
         {
             CSLed_tx();
         }else{
-            CSLed_err();
+            CSLed_busErr();
         }
     }else{
 		if(g_send_count == CS_IO_SEND_BUFFER)
 		{
 			g_send_rp++;
 			g_send_count--;
-            CSLed_err();
+            CSLed_busErr();
 		}
 		g_send_buffer[g_send_wp % CS_IO_SEND_BUFFER] = packet;
 		g_send_wp++;
@@ -142,7 +142,7 @@ void CSIo_process(void)
         {
             CSLed_tx();
         }else{
-            CSLed_err();
+            CSLed_busErr();
         }
         g_send_rp++;
         g_send_count--;
@@ -217,7 +217,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
                 CSLed_err();
             }
         }else{
-            CSLed_err();
+            CSLed_busErr();
         }
     }
 }
@@ -272,7 +272,7 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
         }
         else
         {
-            CSLed_err();
+            CSLed_busErr();
         }
     }
 }
