@@ -22,8 +22,8 @@ typedef void (*CSTimer_callback_t)(void);
 
 typedef struct
 {
-    uint32_t ms;
-    uint16_t us;
+    volatile uint32_t ms;
+    volatile uint16_t us;
 } CSTimer_t;
 
 void CSTimer_init(void);
