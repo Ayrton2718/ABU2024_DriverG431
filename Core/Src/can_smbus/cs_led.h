@@ -28,8 +28,12 @@ void CSLed_rx(void);
 void CSLed_hungUp(void);
 
 // Other Error
-// tx : blink, rx : blink, er : on
+// tx : blink, rx : blink, er : blink
 void CSLed_err(void);
+
+// Other bus_err
+// tx : blink, rx : blink, er : on
+void CSLed_busErr(void);
 
 // Control function
 void CSLed_process(CSType_bool_t is_safety_on);
