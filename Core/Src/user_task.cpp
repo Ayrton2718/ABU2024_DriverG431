@@ -21,6 +21,7 @@ static void UserTask_timerCallback(void);
 static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte);
 
 static bool g_rst_flg;
+
 static count_t g_count_reg;
 static uint8_t  g_id;
 
