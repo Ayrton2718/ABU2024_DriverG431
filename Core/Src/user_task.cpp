@@ -1,7 +1,7 @@
 #include "user_task.h"
 #include "can_smbus/can_smbus.hpp"
 
-#define PWM_HANDLE ((&htim1))
+#define PWM_HANDLE ((&htim2))
 
 extern "C" {
 
@@ -55,8 +55,22 @@ void UserTask_loop(void)
 
 void UserTask_unsafeLoop(void)
 {
-    __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
-    __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+    if(HAL_GPIO_ReadPin(BTN_ID_GPIO_Port, BTN_ID_Pin) == GPIO_PIN_RESET)
+    {
+        if(1000 < CSTimer_getMs(g_tim))
+        {
+            __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 2000);
+            __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 2000);
+            CSLed_err();
+        }else{
+            __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
+            __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+        }
+    }else{
+        __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
+        __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+        CSTimer_start(&g_tim);
+    }
 }
 
 static void UserTask_timerCallback(void)
