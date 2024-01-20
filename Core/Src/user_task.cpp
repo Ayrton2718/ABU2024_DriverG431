@@ -26,6 +26,7 @@ static count_t g_count_reg;
 static uint8_t  g_id;
 
 static CSTimer_t g_tim;
+static CSTimer_t g_timeout;
 
 
 void UserTask_setup(void)
@@ -37,6 +38,8 @@ void UserTask_setup(void)
     g_rst_flg = false;
 
     CSTimer_start(&g_tim);
+    CSTimer_start(&g_timeout);
+
     CSIo_bind(CSType_appid_AMT212B, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
 }
@@ -71,6 +74,7 @@ void UserTask_loop(void)
 							g_count_reg.rot_count++;
 						}
 					}
+                    CSTimer_start(&g_timeout);
 				}else{
                     CSLed_err();
                 }
@@ -81,7 +85,10 @@ void UserTask_loop(void)
 			CSLed_err();
         }
 
-        CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
+        if(CSTimer_getMs(g_timeout) < 100)
+        {
+            CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
+        }
     }
 
     if(g_rst_flg)
