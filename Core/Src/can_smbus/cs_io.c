@@ -11,7 +11,7 @@
 #include "cs_id.h"
 #include "cs_led.h"
 
-#define CS_IO_SEND_BUFFER        (8)
+#define CS_IO_SEND_BUFFER        (4)
 
 typedef struct
 {
