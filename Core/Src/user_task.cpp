@@ -3,10 +3,15 @@
 
 #include "usart.h"
 
+/*
+R6093U
+https://ip.festo-didactic.com/Infoportal/Robotino/document/gyro.pdf
+*/
+
 #define UART_HANDLE ((&huart2))
 
- #define ENABLE_ANGLE_OUT
-//#define ENABLE_GYRO_OUT
+#define ENABLE_ANGLE_OUT
+#define ENABLE_GYRO_OUT
 // #define ENABLE_ACC_OUT
 
 extern "C" {
@@ -15,6 +20,7 @@ typedef struct{
     int16_t roll;   // 1/100 [degree]
     int16_t pitch;  // 1/100 [degree]
     int16_t yaw;    // 1/100 [degree]
+    int16_t spin_yaw;
 }__attribute__((__packed__)) angle_t;
 
 typedef struct{
@@ -39,6 +45,8 @@ static angle_t  g_angle_reg;
 static gyro_t   g_gyro_reg;
 static acc_t    g_acc_reg;
 
+static int16_t  g_befor_angle;
+
 static bool     g_is_connecting;
 
 static uint8_t  g_last_index;
@@ -60,6 +68,7 @@ void UserTask_setup(void)
     g_angle_reg.roll = 0;
     g_angle_reg.pitch = 0;
     g_angle_reg.yaw = 0;
+    g_angle_reg.spin_yaw = 0;
 
     g_gyro_reg.roll = 0;
     g_gyro_reg.pitch = 0;
@@ -68,6 +77,8 @@ void UserTask_setup(void)
     g_acc_reg.x = 0;
     g_acc_reg.y = 0;
     g_acc_reg.z = 0;
+
+    g_befor_angle = 0;
 
     g_is_connecting = false;
 
@@ -113,6 +124,14 @@ void UserTask_loop(void)
         g_acc_reg.y = g_data[data_flg][18] << 8 | g_data[data_flg][17];
         g_acc_reg.z = g_data[data_flg][20] << 8 | g_data[data_flg][19];
 
+        if((160 * 100) < g_befor_angle && g_angle_reg.yaw < (-160 * 100))
+        {
+            g_angle_reg.spin_yaw++;
+        }else if(g_befor_angle < (-160 * 100) && (160 * 100) < g_angle_reg.yaw){
+            g_angle_reg.spin_yaw--;
+        }
+        g_befor_angle = g_angle_reg.yaw;
+
 #ifdef ENABLE_ANGLE_OUT
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_angle_reg, sizeof(angle_t));
 #endif /*ENABLE_ANGLE_OUT*/
@@ -129,6 +148,28 @@ void UserTask_loop(void)
 
     if(g_rst_flg)
     {
+        g_angle_reg.roll = 0;
+        g_angle_reg.pitch = 0;
+        g_angle_reg.yaw = 0;
+        g_angle_reg.spin_yaw = 0;
+
+        g_gyro_reg.roll = 0;
+        g_gyro_reg.pitch = 0;
+        g_gyro_reg.yaw = 0;
+
+        g_acc_reg.x = 0;
+        g_acc_reg.y = 0;
+        g_acc_reg.z = 0;
+
+        g_befor_angle = 0;
+
+        g_is_connecting = false;
+
+        g_last_index = 0;
+        g_data_flg = 0;
+        memset(&g_data[0], 0x00, sizeof(uint8_t) * 2);
+        memset(&g_data[1], 0x00, sizeof(uint8_t) * 2);
+
         g_rst_flg = false;
     }
 }
