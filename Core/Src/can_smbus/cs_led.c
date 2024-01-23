@@ -75,7 +75,7 @@ void CSLed_err(void)
 
 void CSLed_busErr(void)
 {
-    g_errStopCount = 20;
+    g_errStopCount = 10;
 }
 
 
