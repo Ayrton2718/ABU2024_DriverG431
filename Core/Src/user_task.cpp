@@ -124,10 +124,10 @@ void UserTask_loop(void)
         g_acc_reg.y = g_data[data_flg][18] << 8 | g_data[data_flg][17];
         g_acc_reg.z = g_data[data_flg][20] << 8 | g_data[data_flg][19];
 
-        if((160 * 100) < g_befor_angle && g_angle_reg.yaw < (-160 * 100))
+        if((100 * 100) < g_befor_angle && g_angle_reg.yaw < (-100 * 100))
         {
             g_angle_reg.spin_yaw++;
-        }else if(g_befor_angle < (-160 * 100) && (160 * 100) < g_angle_reg.yaw){
+        }else if(g_befor_angle < (-100 * 100) && (100 * 100) < g_angle_reg.yaw){
             g_angle_reg.spin_yaw--;
         }
         g_befor_angle = g_angle_reg.yaw;
