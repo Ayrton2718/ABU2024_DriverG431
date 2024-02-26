@@ -196,7 +196,7 @@ void regWrite(uint8_t reg_ptr, uint16_t data) {
     buff[0] = data & 0xFF;
     buff[1] = data >> 8;
 
-    HAL_I2C_Mem_Write(I2C_HANDLE, I2C_ADDRESS << 1, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)buff, 2, 5);
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Write(I2C_HANDLE, I2C_ADDRESS << 1, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)buff, 2, 5);
 }
 
 /**
@@ -209,7 +209,7 @@ uint16_t regRead(uint8_t reg_ptr) {
     /* Variables */
     unsigned char rx_data[2] = {0};
 
-    HAL_I2C_Mem_Read(I2C_HANDLE, I2C_ADDRESS << 1, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)rx_data, 2, 5);
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(I2C_HANDLE, I2C_ADDRESS << 1, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)rx_data, 2, 5);
 
     return (rx_data[1] << 8) | rx_data[0];
 }
