@@ -22,8 +22,8 @@ typedef void (*CSTimer_callback_t)(void);
 
 typedef struct
 {
-    uint32_t ms;
-    uint16_t us;
+    volatile uint32_t ms;
+    volatile uint16_t us;
 } CSTimer_t;
 
 void CSTimer_init(void);
@@ -32,8 +32,8 @@ void CSTimer_bind(CSTimer_callback_t callback);
 
 void CSTimer_start(CSTimer_t* tim);
 
-uint32_t CSTimer_getMs(const CSTimer_t* tim);
-uint32_t CSTimer_getUs(const CSTimer_t* tim);
+uint32_t CSTimer_getMs(const CSTimer_t tim);
+uint32_t CSTimer_getUs(const CSTimer_t tim);
 
 void CSTimer_delayUs(uint32_t us);
 

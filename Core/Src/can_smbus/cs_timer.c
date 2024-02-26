@@ -1,6 +1,6 @@
 #include "cs_timer.h"
 
-static uint32_t g_ms_count;
+static volatile uint32_t g_ms_count;
 
 static CSTimer_callback_t   g_callback;
 
@@ -23,61 +23,56 @@ void CSTimer_bind(CSTimer_callback_t callback)
 
 void CSTimer_start(CSTimer_t* tim)
 {
-    tim->us = (uint16_t)__HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
-    tim->ms = g_ms_count;
+    uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
+	uint32_t now_ms = g_ms_count;
+
+    tim->ms = now_ms;
+    tim->us = now_us;
 }
 
-uint32_t CSTimer_getMs(const CSTimer_t* tim)
+uint32_t CSTimer_getMs(const CSTimer_t tim)
 {
-    register uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
-    register uint32_t now_ms = g_ms_count;
+    uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
+	uint32_t now_ms = g_ms_count;
 
-    if(tim->us < now_us)
+    uint32_t ms;
+
+    if(tim.us < now_us)
     {
-        return (now_ms - tim->ms);
+    	ms = (now_ms - tim.ms);
+    }else if(now_ms == tim.ms){
+    	ms = 0;
     }else{
-        return (now_ms - tim->ms - 1);
+    	ms = (now_ms - tim.ms - 1);
     }
+    return ms;
 }
 
-
-uint32_t CSTimer_getUs(const CSTimer_t* tim)
+uint32_t CSTimer_getUs(const CSTimer_t tim)
 {
-    register uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
-    register uint32_t now_ms = g_ms_count;
+    uint16_t now_us = __HAL_TIM_GET_COUNTER(CS_TIMER_USE_HTIM);
+    uint32_t now_ms = g_ms_count;
 
-    if(tim->us < now_us)
+    uint32_t us;
+
+    if(tim.us < now_us)
     {
-        return (now_ms - tim->ms) * 1000 + (now_us - tim->us);
+    	us = (now_ms - tim.ms) * 1000 + (now_us - tim.us);
+    }else if(now_ms == tim.ms){
+    	us = ((1000 + now_us) - tim.us);
     }else{
-        return (now_ms - tim->ms - 1) * 1000 + (1000 + now_us - tim->us);
+    	us = (now_ms - tim.ms - 1) * 1000 + ((1000 + now_us) - tim.us);
     }
+
+    return us;
 }
+
 
 void CSTimer_delayUs(uint32_t us)
 {
     CSTimer_t start;
     CSTimer_start(&start);
-    while(1)
-    {
-        if(us <= CSTimer_getUs(&start))
-        {
-            break;
-        }
-
-        __asm__(
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-            "nop\n\r"
-        );
-    }
+    while(CSTimer_getUs(start) < us) {}
 }
 
 void __CSTimer_interrupt(TIM_HandleTypeDef* htim)

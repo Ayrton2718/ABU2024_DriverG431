@@ -51,7 +51,7 @@ void UserTask_setup(void)
 
 void UserTask_loop(void)
 {
-    uint32_t us = CSTimer_getUs(&g_tim);
+    uint32_t us = CSTimer_getUs(g_tim);
     if(1000 < us)
     {
         unsigned short rgbc[4];

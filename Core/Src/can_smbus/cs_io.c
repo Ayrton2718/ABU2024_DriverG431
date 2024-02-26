@@ -11,7 +11,7 @@
 #include "cs_id.h"
 #include "cs_led.h"
 
-#define CS_IO_SEND_BUFFER        (8)
+#define CS_IO_SEND_BUFFER        (4)
 
 typedef struct
 {
@@ -19,17 +19,17 @@ typedef struct
     FDCAN_TxHeaderTypeDef header;
 } CSIo_packet_t;
 
-uint8_t         g_send_wp;
-uint8_t         g_send_rp;
-uint8_t         g_send_count;
-CSIo_packet_t   g_send_buffer[CS_IO_SEND_BUFFER];
+static uint8_t         g_send_wp;
+static volatile uint8_t         g_send_rp;
+static volatile uint8_t         g_send_count;
+static CSIo_packet_t   g_send_buffer[CS_IO_SEND_BUFFER];
 
 static uint16_t   g_my_id;
 static CSType_appid_t g_appid;
 static CSIo_canCallback_t g_can_callback;
 static CSIo_resetCallback_t g_reset_callback;
 
-static uint32_t g_safety_time;
+static volatile uint32_t g_safety_time;
 
 
 static void CSIo_setFilterMask(uint32_t index, uint32_t fifo_id, uint16_t id1, uint16_t mask1);
@@ -111,14 +111,14 @@ static void CSIo_send(uint16_t reg, const uint8_t* data, uint8_t len)
         {
             CSLed_tx();
         }else{
-            CSLed_err();
+            CSLed_busErr();
         }
     }else{
 		if(g_send_count == CS_IO_SEND_BUFFER)
 		{
 			g_send_rp++;
 			g_send_count--;
-            CSLed_err();
+            CSLed_busErr();
 		}
 		g_send_buffer[g_send_wp % CS_IO_SEND_BUFFER] = packet;
 		g_send_wp++;
@@ -142,7 +142,7 @@ void CSIo_process(void)
         {
             CSLed_tx();
         }else{
-            CSLed_err();
+            CSLed_busErr();
         }
         g_send_rp++;
         g_send_count--;
@@ -217,7 +217,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
                 CSLed_err();
             }
         }else{
-            CSLed_err();
+            CSLed_busErr();
         }
     }
 }
@@ -249,7 +249,7 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
 				{
 					if((data[3] == 'U') && (data[2] == 'N') && (data[1] == 'S') && (data[0] == 'F'))
 					{
-						g_safety_time = 0;
+						g_safety_time = 1;
 						CSLed_rx();
 					}
 				}
@@ -272,7 +272,7 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
         }
         else
         {
-            CSLed_err();
+            CSLed_busErr();
         }
     }
 }
