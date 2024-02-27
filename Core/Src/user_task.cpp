@@ -1,7 +1,7 @@
 #include "user_task.h"
 #include "can_smbus/can_smbus.hpp"
 
-#include "veml3328.h"
+#include "veml3328.hpp"
 
 extern "C" {
 
@@ -19,23 +19,34 @@ static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
 static colors_t g_colors_reg;
+static uint8_t g_err_count[4];
 
 static bool g_rst_flg;
 static CSTimer_t g_tim;
 
 void UserTask_setup(void)
 {
-	HAL_Delay(100);
+	HAL_Delay(20);
 
     g_colors_reg.red = 0;
     g_colors_reg.green = 0;
     g_colors_reg.blue = 0;
     g_colors_reg.ir = 0;
 
-	uint8_t err = Veml3328.begin();
-	if(err){
+    g_err_count[0] = 0;
+    g_err_count[1] = 0;
+    g_err_count[2] = 0;
+    g_err_count[3] = 0;
 
-	}
+    for(size_t i = 0; Veml3328.begin() != HAL_OK; i++)
+    {
+        if(200 < i)
+        {
+            CSLed_err();
+            i = 200;
+        }
+        HAL_Delay(1);
+    }
 
     g_rst_flg = false;
     
@@ -47,15 +58,52 @@ void UserTask_setup(void)
 void UserTask_loop(void)
 {
     uint32_t us = CSTimer_getUs(g_tim);
-    if(1000 < us)
+    if(50000 < us)
     {
-		g_colors_reg.red = Veml3328.getRed();
-		g_colors_reg.green = Veml3328.getGreen();
-		g_colors_reg.blue = Veml3328.getBlue();
-		g_colors_reg.ir = Veml3328.getIR();
-		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_colors_reg, sizeof(colors_t));
+        CSTimer_start(&g_tim);
 
-		CSTimer_start(&g_tim);
+        int16_t red, green, blue, ir;
+		if(Veml3328.getRed(&red) == HAL_OK){
+            g_colors_reg.red = red;
+            g_err_count[0] = 0;
+        }else{
+            g_err_count[0]++;
+            if(100 < g_err_count[0]){
+                CSLed_err();
+            }
+        }
+        
+        if(Veml3328.getGreen(&green) == HAL_OK){
+            g_colors_reg.green = green;
+            g_err_count[1] = 0;
+        }else{
+            g_err_count[1]++;
+            if(100 < g_err_count[1]){
+                CSLed_err();
+            }
+        }
+
+        if(Veml3328.getBlue(&blue) == HAL_OK){
+            g_colors_reg.blue = blue;
+            g_err_count[2] = 0;
+        }else{
+            g_err_count[2]++;
+            if(100 < g_err_count[2]){
+                CSLed_err();
+            }
+        }
+
+        if(Veml3328.getIR(&ir) == HAL_OK){
+            g_colors_reg.ir = ir;
+            g_err_count[3] = 0;
+        }else{
+            g_err_count[3]++;
+            if(100 < g_err_count[3]){
+                CSLed_err();
+            }
+        }
+
+		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_colors_reg, sizeof(colors_t));
     }
 
     if(g_rst_flg)

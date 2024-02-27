@@ -1,9 +1,10 @@
-#include "veml3328.h"
+#include "veml3328.hpp"
 
 #include <i2c.h>
 #include <string.h>
 
 #define I2C_HANDLE ((&hi2c2))
+#define VEML_ADDRESS (I2C_ADDRESS_DEFAULT << 1)
 
 #define SerialDebug Serial3 // Cellular Mini
 //#define __DEBUG
@@ -17,163 +18,187 @@
 #define POINTER_IR          0x08 // Infrared (IR) channel pointer
 #define POINTER_DEVICE_ID   0x0C // Device ID = 0x28
 
-/* Global variables */
-static uint8_t I2C_ADDRESS;
-
 /* Forward function delcarations */
-void regWrite(uint8_t reg_ptr, uint16_t data);
-uint16_t regRead(uint8_t reg_ptr);
+HAL_StatusTypeDef regWrite(uint8_t reg_ptr, uint16_t data);
+HAL_StatusTypeDef regRead(uint8_t reg_ptr, uint16_t* data);
 
 /* Singleton instance. Used by rest of library */
 VEMLClass Veml3328 = VEMLClass::instance();
 
 
-uint8_t VEMLClass::begin(void) {
-    I2C_ADDRESS = I2C_ADDRESS_DEFAULT;
+HAL_StatusTypeDef VEMLClass::begin(void) {
     return Veml3328.wake();
 }
 
-uint8_t VEMLClass::begin(uint8_t address) {
-    I2C_ADDRESS = address;
-    return Veml3328.wake();
-}
-
-uint8_t VEMLClass::wake(void) {
-    regWrite(POINTER_CONFIG,
-             ((0 << 15) & (0 << 0))); // Set shutdown bits SD1/SD0
+HAL_StatusTypeDef VEMLClass::wake(void) {
+    if(regWrite(POINTER_CONFIG, ((0 << 15) & (0 << 0))) != HAL_OK){
+        return HAL_ERROR;
+    }
 
     /* Check shutdown bits */
-    uint16_t reg = regRead(POINTER_CONFIG);
+    uint16_t reg;
+    regRead(POINTER_CONFIG, &reg);
     if ((reg & (1 << 15)) && (reg & (1 << 0))) {
 #ifdef __DEBUG
         this->log_out("Error: shutdown bits set");
 #endif
-        return 1;
+        return HAL_ERROR;
     }
 
-    return 0;
+    return HAL_OK;
 }
 
-void VEMLClass::shutdown(void) {
+HAL_StatusTypeDef VEMLClass::shutdown(void) {
     /* Set shutdown bits SD1/SD0 */
-    regWrite(POINTER_CONFIG, ((1 << 15) | (1 << 0)));
+    return regWrite(POINTER_CONFIG, ((1 << 15) | (1 << 0)));
 }
 
-int16_t VEMLClass::getRed(void) { return regRead(POINTER_RED); }
-
-int16_t VEMLClass::getGreen(void) { return regRead(POINTER_GREEN); }
-
-int16_t VEMLClass::getBlue(void) { return regRead(POINTER_BLUE); }
-
-int16_t VEMLClass::getIR(void) { return regRead(POINTER_IR); }
-
-int16_t VEMLClass::getClear(void) { return regRead(POINTER_CLEAR); }
-
-uint16_t VEMLClass::deviceID(void) {
-    return (regRead(POINTER_DEVICE_ID) & 0xFF); // LSB data
+HAL_StatusTypeDef VEMLClass::getRed(int16_t* data) {
+    return regRead(POINTER_RED, (uint16_t*)data);
 }
 
-uint8_t VEMLClass::rbShutdown(void) {
-    regWrite(POINTER_CONFIG, (1 << 14));
+HAL_StatusTypeDef VEMLClass::getGreen(int16_t* data) {
+    return regRead(POINTER_GREEN, (uint16_t*)data);
+}
+
+HAL_StatusTypeDef VEMLClass::getBlue(int16_t* data) {
+    return regRead(POINTER_BLUE, (uint16_t*)data); 
+}
+
+HAL_StatusTypeDef VEMLClass::getIR(int16_t* data) {
+    return regRead(POINTER_IR, (uint16_t*)data);
+}
+
+HAL_StatusTypeDef VEMLClass::getClear(int16_t* data) {
+    return regRead(POINTER_CLEAR, (uint16_t*)data);
+}
+
+HAL_StatusTypeDef VEMLClass::deviceID(uint16_t* data) {
+    HAL_StatusTypeDef status = regRead(POINTER_DEVICE_ID, data);
+    *data = *data & 0xFF;
+    return status; // LSB data
+}
+
+HAL_StatusTypeDef VEMLClass::rbShutdown(void) {
+    if(regWrite(POINTER_CONFIG, (1 << 14)) != HAL_OK){
+        return HAL_ERROR;
+    }
 
     /* Check shutdown bit */
-    uint16_t reg = regRead(POINTER_CONFIG);
+    uint16_t reg;
+    regRead(POINTER_CONFIG, &reg);
+
     if (!(reg & (1 << 14))) {
 #ifdef __DEBUG
         this->log_out("Error: shutdown bit not set");
 #endif
-        return 1;
+        return HAL_ERROR;
     }
 
-    return 0;
+    return HAL_OK;
 }
 
-uint8_t VEMLClass::rbWakeup(void) {
-    regWrite(POINTER_CONFIG, (0 << 14));
-
+HAL_StatusTypeDef VEMLClass::rbWakeup(void) {
+    if(regWrite(POINTER_CONFIG, (0 << 14)) != HAL_OK){
+        return HAL_ERROR;
+    }
     /* Check shutdown bit */
-    uint16_t reg = regRead(POINTER_CONFIG);
+    uint16_t reg;
+    regRead(POINTER_CONFIG, &reg);
     if (reg & (1 << 14)) {
 #ifdef __DEBUG
         this->log_out("Error: shutdown bit set");
 #endif
-        return 1;
+        return HAL_ERROR;
     }
 
-    return 0;
+    return HAL_OK;
 }
 
-uint8_t VEMLClass::setDG(DG_t val) {
-    regWrite(POINTER_CONFIG, val);
+HAL_StatusTypeDef VEMLClass::setDG(DG_t val) {
+    if(regWrite(POINTER_CONFIG, val) != HAL_OK){
+        return HAL_ERROR;
+    }
 
     /* Check user val */
-    uint16_t reg = regRead(POINTER_CONFIG);
+    uint16_t reg;
+    regRead(POINTER_CONFIG, &reg);
     if (!(reg & val)) {
 #ifdef __DEBUG
         this->log_out("Error: DG not set");
 #endif
-        return 1;
+        return HAL_ERROR;
     }
 
-    return 0;
+    return HAL_OK;
 }
 
-uint8_t VEMLClass::setGain(gain_t val) {
-    regWrite(POINTER_CONFIG, val);
+HAL_StatusTypeDef VEMLClass::setGain(gain_t val) {
+    if(regWrite(POINTER_CONFIG, val) != HAL_OK){
+        return HAL_ERROR;
+    }
 
     /* Check user val */
-    uint16_t reg = regRead(POINTER_CONFIG);
+    uint16_t reg;
+    regRead(POINTER_CONFIG, &reg);
     if (!(reg & val)) {
 #ifdef __DEBUG
         this->log_out("Error: gain not set");
 #endif
-        return 1;
+        return HAL_ERROR;
     }
 
-    return 0;
+    return HAL_OK;
 }
 
-uint8_t VEMLClass::setSensitivity(bool high_low_sens) {
+HAL_StatusTypeDef VEMLClass::setSensitivity(bool high_low_sens) {
     /* Variables */
-    uint16_t reg;
-
     if (high_low_sens) {
-        regWrite(POINTER_CONFIG, (1 << 6));
+        if(regWrite(POINTER_CONFIG, (1 << 6)) != HAL_OK){
+            return HAL_ERROR;
+        }
 
-        reg = regRead(POINTER_CONFIG);
+        uint16_t reg;
+        regRead(POINTER_CONFIG, &reg);
         if (reg & (0 << 6)) {
 #ifdef __DEBUG
             this->log_out("Error: gain not set");
 #endif
-            return 1;
+            return HAL_ERROR;
         }
     } else {
-        regWrite(POINTER_CONFIG, (0 << 6));
+        if(regWrite(POINTER_CONFIG, (0 << 6)) != HAL_OK){
+            return HAL_ERROR;
+        }
 
-        reg = regRead(POINTER_CONFIG);
+        uint16_t reg;
+        regRead(POINTER_CONFIG, &reg);
         if (reg & (1 << 6)) {
 #ifdef __DEBUG
             this->log_out("Error: gain not set");
 #endif
-            return 1;
+            return HAL_ERROR;
         }
     }
-    return 0;
+    return HAL_OK;
 }
 
-uint8_t VEMLClass::setIntTime(int_time_t time) {
-    regWrite(POINTER_CONFIG, time);
+HAL_StatusTypeDef VEMLClass::setIntTime(int_time_t time) {
+    if(regWrite(POINTER_CONFIG, time) != HAL_OK){
+        return HAL_ERROR;
+    }
 
     /* Check user val */
-    uint16_t reg = regRead(POINTER_CONFIG);
+    uint16_t reg;
+    regRead(POINTER_CONFIG, &reg);
     if (!(reg & time)) {
 #ifdef __DEBUG
         this->log_out("Error: gain not set");
 #endif
-        return 1;
+        return HAL_ERROR;
     }
 
-    return 0;
+    return HAL_OK;
 }
 
 /**
@@ -182,21 +207,12 @@ uint8_t VEMLClass::setIntTime(int_time_t time) {
  * @param reg_ptr Register pointer
  * @param data 16-bit data
  */
-void regWrite(uint8_t reg_ptr, uint16_t data) {
-    // /* Start transaction */
-    // WIRE.beginTransmission(I2C_ADDRESS);
-
-    // WIRE.write(reg_ptr);     // Register pointer
-    // WIRE.write(data & 0xFF); // LSB data
-    // WIRE.write(data >> 8);   // MSB data
-
-    // WIRE.endTransmission(true);
-
+HAL_StatusTypeDef regWrite(uint8_t reg_ptr, uint16_t data) {
     uint8_t buff[2];
     buff[0] = data & 0xFF;
     buff[1] = data >> 8;
 
-    HAL_StatusTypeDef status = HAL_I2C_Mem_Write(I2C_HANDLE, I2C_ADDRESS << 1, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)buff, 2, 5);
+    return HAL_I2C_Mem_Write(I2C_HANDLE, VEML_ADDRESS, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)buff, 2, 5);
 }
 
 /**
@@ -205,11 +221,11 @@ void regWrite(uint8_t reg_ptr, uint16_t data) {
  * @param reg_ptr Register pointer
  * @return uint16_t Returned data
  */
-uint16_t regRead(uint8_t reg_ptr) {
+HAL_StatusTypeDef regRead(uint8_t reg_ptr, uint16_t* data) {
     /* Variables */
     unsigned char rx_data[2] = {0};
 
-    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(I2C_HANDLE, I2C_ADDRESS << 1, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)rx_data, 2, 5);
-
-    return (rx_data[1] << 8) | rx_data[0];
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(I2C_HANDLE, VEML_ADDRESS, reg_ptr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)rx_data, 2, 5);
+    *data = (rx_data[1] << 8) | rx_data[0];
+    return status;
 }

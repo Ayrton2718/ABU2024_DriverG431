@@ -1,6 +1,7 @@
 #ifndef VEML3328_H
 #define VEML3328_H
 
+#include <main.h>
 #include <stdint.h>
 #include <string>
 
@@ -47,84 +48,76 @@ class VEMLClass {
      *
      * @return int 0 if successful, 1 if failed
      */
-    uint8_t begin(void);
-
-    /**
-     * @brief Initialize VEML3328 library with custom I2C address
-     *
-     * @param address Custom I2C address
-     * @return int 0 if successful, 1 if failed
-     */
-    uint8_t begin(uint8_t address);
+    HAL_StatusTypeDef begin(void);
 
     /**
      * @brief Wake up VEML3328 (low power mode)
      *
      * @return int 0 if successful, 1 if failed
      */
-    uint8_t wake(void);
+    HAL_StatusTypeDef wake(void);
 
     /**
      * @brief Shutdown VEML3328 (low power mode)
      *
      */
-    void shutdown(void);
+    HAL_StatusTypeDef shutdown(void);
 
     /**
      * @brief Get RED channel value
      *
      * @return int16_t Channel value
      */
-    int16_t getRed(void);
+    HAL_StatusTypeDef getRed(int16_t* data);
 
     /**
      * @brief Get GREEN channel value
      *
      * @return int16_t Channel value
      */
-    int16_t getGreen(void);
+    HAL_StatusTypeDef getGreen(int16_t* data);
 
     /**
      * @brief Get BLUE channel value
      *
      * @return int16_t Channel value
      */
-    int16_t getBlue(void);
+    HAL_StatusTypeDef getBlue(int16_t* data);
 
     /**
      * @brief Get INFRARED(IR) channel value
      *
      * @return int16_t Channel value
      */
-    int16_t getIR(void);
+    HAL_StatusTypeDef getIR(int16_t* data);
 
     /**
      * @brief Get CLEAR channel value
      *
      * @return int16_t Channel value
      */
-    int16_t getClear(void);
+    HAL_StatusTypeDef getClear(int16_t* data);
 
     /**
      * @brief Return device ID from sensor
      *
      * @return uint8_t Device ID byte
      */
-    uint16_t deviceID(void);
+    HAL_StatusTypeDef deviceID(uint16_t* data);
 
 	/**
 	 * @brief Shutdown R and B channel on device
 	 * 
 	 * @return int 0 if successful, 1 if failed
 	 */
-    uint8_t rbShutdown(void);
+    HAL_StatusTypeDef rbShutdown(void);
 
 	/**
 	 * @brief Wake up R and B channel on device
 	 * 
 	 * @return int 0 if successful, 1 if failed
 	 */
-	uint8_t rbWakeup(void);
+	HAL_StatusTypeDef rbWakeup(void);
 
 	/**
 	 * @brief Set DG value of device
@@ -132,7 +125,7 @@ class VEMLClass {
 	 * @param val DG value enum member
 	 * @return int 0 if successful, 1 if failed
 	 */
-    uint8_t setDG(DG_t val);
+    HAL_StatusTypeDef setDG(DG_t val);
 
 	/**
 	 * @brief Set Gain value of device
@@ -140,7 +133,7 @@ class VEMLClass {
 	 * @param val Gain value enum member
 	 * @return int 0 if successful, 1 if failed
 	 */
-	uint8_t setGain(gain_t val);
+	HAL_StatusTypeDef setGain(gain_t val);
 
 	/**
 	 * @brief Set sensitivity of device
@@ -148,7 +141,7 @@ class VEMLClass {
 	 * @param high_low_sens High sensitivity (false, default), low sensitivity (true) (1/3)
 	 * @return int 0 if successful, 1 if failed
 	 */
-	uint8_t setSensitivity(bool high_low_sens);
+	HAL_StatusTypeDef setSensitivity(bool high_low_sens);
 
 	/**
 	 * @brief Set integration time of device
@@ -156,8 +149,9 @@ class VEMLClass {
 	 * @param time Integration time enum member
 	 * @return int 0 if successful, 1 if failed
 	 */
-    uint8_t setIntTime(int_time_t time);
+    HAL_StatusTypeDef setIntTime(int_time_t time);
 };
+
 extern VEMLClass Veml3328;
 
 #endif
