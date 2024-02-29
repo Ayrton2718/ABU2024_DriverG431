@@ -104,7 +104,6 @@ target_sources(
     "Core/Src/system_stm32g4xx.c"
     "Core/Src/tim.c"
     "Core/Src/user_task.cpp"
-    "Core/Src/veml3328.cpp"
     "Core/Startup/startup_stm32g431k8tx.s"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c"
     "Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma_ex.c"
