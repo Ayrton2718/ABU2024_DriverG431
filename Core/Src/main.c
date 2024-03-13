@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fdcan.h"
+#include "i2c.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -95,6 +96,9 @@ int main(void)
   MX_GPIO_Init();
   MX_FDCAN1_Init();
   MX_TIM7_Init();
+  MX_I2C3_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   CSLed_init();
   CSTimer_init();
