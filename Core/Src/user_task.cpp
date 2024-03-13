@@ -1,6 +1,8 @@
 #include "user_task.h"
 #include "can_smbus/can_smbus.hpp"
 
+#include <array>
+
 extern "C" {
 
 typedef struct{
@@ -36,10 +38,17 @@ static switch_t g_sw_reg;
 static bool g_rst_flg;
 static CSTimer_t g_tim;
 
+static std::array<std::pair<GPIO_TypeDef*, uint16_t >, 4> g_sw_pins;
+
 void UserTask_setup(void)
 {
     g_rst_flg = false;
-    
+
+    g_sw_pins[0] = std::make_pair(SWITCH1_GPIO_Port, SWITCH1_Pin);
+    g_sw_pins[1] = std::make_pair(SWITCH2_GPIO_Port, SWITCH2_Pin);
+    g_sw_pins[2] = std::make_pair(SWITCH3_GPIO_Port, SWITCH3_Pin);
+    g_sw_pins[3] = std::make_pair(SWITCH4_GPIO_Port, SWITCH4_Pin);
+
     CSTimer_start(&g_tim);
     CSIo_bind(CSType_appid_SWITCH, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
@@ -52,16 +61,13 @@ void UserTask_loop(void)
     {
         CSTimer_start(&g_tim);
 
-        if(HAL_GPIO_ReadPin(SWITCH1_GPIO_Port, SWITCH1_Pin) == GPIO_PIN_SET){
-        	set_sw(&g_sw_reg.list1, 0, false);
-        }else{
-        	set_sw(&g_sw_reg.list1, 0, true);
-        }
-
-        if(HAL_GPIO_ReadPin(SWITCH2_GPIO_Port, SWITCH2_Pin) == GPIO_PIN_SET){
-        	set_sw(&g_sw_reg.list1, 1, false);
-        }else{
-        	set_sw(&g_sw_reg.list1, 1, true);
+        for(size_t i = 0; i < g_sw_pins.size(); i++)
+        {
+            if(HAL_GPIO_ReadPin(g_sw_pins[i].first, g_sw_pins[i].second) == GPIO_PIN_SET){
+                set_sw(&g_sw_reg.list1, i, false);
+            }else{
+                set_sw(&g_sw_reg.list1, i, true);
+            }
         }
 
 		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_sw_reg, sizeof(switch_t));
