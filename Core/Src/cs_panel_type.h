@@ -34,7 +34,7 @@ typedef struct{
     uint8_t ros_err1   		: 1;
     uint8_t ros_err2 		: 1;
     uint8_t is_red_zone     : 1;
-    uint8_t reserved2 		: 1;
+    uint8_t is_blue_zone    : 1;
     uint8_t checksum 		: 8;
 }__attribute__((__packed__)) CSPanel_m2s_t;
 
