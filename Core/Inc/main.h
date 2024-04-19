@@ -67,10 +67,10 @@ void Error_Handler(void);
 #define START_LED_GPIO_Port GPIOA
 #define KILL_SW_Pin GPIO_PIN_3
 #define KILL_SW_GPIO_Port GPIOA
-#define BOOTING_LED_Pin GPIO_PIN_4
-#define BOOTING_LED_GPIO_Port GPIOA
-#define BOOT_ERR_LED_Pin GPIO_PIN_5
+#define BOOT_ERR_LED_Pin GPIO_PIN_4
 #define BOOT_ERR_LED_GPIO_Port GPIOA
+#define BOOTING_LED_Pin GPIO_PIN_5
+#define BOOTING_LED_GPIO_Port GPIOA
 #define BOOTED_LED_Pin GPIO_PIN_6
 #define BOOTED_LED_GPIO_Port GPIOA
 #define RED_ZONE_LED_Pin GPIO_PIN_7
