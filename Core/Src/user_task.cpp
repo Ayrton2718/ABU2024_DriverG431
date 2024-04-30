@@ -7,9 +7,8 @@ extern "C" {
 
 typedef struct{
     int16_t red;
-    int16_t green;
     int16_t blue;
-    int16_t ir;
+    int16_t clear;
 }__attribute__((__packed__)) colors_t;
 
 }
@@ -19,7 +18,7 @@ static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
 static colors_t g_colors_reg;
-static uint16_t g_err_count[4];
+static uint16_t g_err_count[3];
 
 static bool g_rst_flg;
 static CSTimer_t g_tim;
@@ -29,14 +28,12 @@ void UserTask_setup(void)
 	HAL_Delay(20);
 
     g_colors_reg.red = 0;
-    g_colors_reg.green = 0;
     g_colors_reg.blue = 0;
-    g_colors_reg.ir = 0;
+    g_colors_reg.clear = 0;
 
     g_err_count[0] = 0;
     g_err_count[1] = 0;
     g_err_count[2] = 0;
-    g_err_count[3] = 0;
 
     for(uint16_t i = 0; i < 200; i++)
     {
@@ -62,11 +59,11 @@ void UserTask_setup(void)
 void UserTask_loop(void)
 {
     uint32_t us = CSTimer_getUs(g_tim);
-    if(50000 < us)
+    if(24000 < us)
     {
         CSTimer_start(&g_tim);
 
-        int16_t red, green, blue, ir;
+        int16_t red, blue, clear;
 		if(veml::getRed(&red) == HAL_OK){
             g_colors_reg.red = red;
             g_err_count[0] = 0;
@@ -76,9 +73,9 @@ void UserTask_loop(void)
                 CSLed_err();
             }
         }
-        
-        if(veml::getGreen(&green) == HAL_OK){
-            g_colors_reg.green = green;
+
+        if(veml::getBlue(&blue) == HAL_OK){
+            g_colors_reg.blue = blue;
             g_err_count[1] = 0;
         }else{
             g_err_count[1]++;
@@ -87,8 +84,8 @@ void UserTask_loop(void)
             }
         }
 
-        if(veml::getBlue(&blue) == HAL_OK){
-            g_colors_reg.blue = blue;
+        if(veml::getClear(&clear) == HAL_OK){
+            g_colors_reg.clear = clear;
             g_err_count[2] = 0;
         }else{
             g_err_count[2]++;
@@ -97,19 +94,9 @@ void UserTask_loop(void)
             }
         }
 
-        if(veml::getIR(&ir) == HAL_OK){
-            g_colors_reg.ir = ir;
-            g_err_count[3] = 0;
-        }else{
-            g_err_count[3]++;
-            if(4 < g_err_count[3]){
-                CSLed_err();
-            }
-        }
-
 		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_colors_reg, sizeof(colors_t));
 
-        if(20 * 4 < g_err_count[0] + g_err_count[1] + g_err_count[2] + g_err_count[3]){
+        if(20 * 4 < g_err_count[0] + g_err_count[1] + g_err_count[2]){
             veml::begin();
         }
     }
