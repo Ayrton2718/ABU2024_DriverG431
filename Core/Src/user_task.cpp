@@ -1,7 +1,7 @@
 #include "user_task.h"
 #include "can_smbus/can_smbus.hpp"
 
-#define PWM_HANDLE ((&htim2))
+#define PWM_HANDLE ((&htim1))
 
 extern "C" {
 
