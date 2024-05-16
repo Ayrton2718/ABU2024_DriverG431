@@ -1777,11 +1777,11 @@ void sh2_close(void)
  *
  * This function should be called periodically by the host system to service an open sensor hub.
  */
-void sh2_service(void)
+uint8_t sh2_service(void)
 {
     sh2_t *pSh2 = &_sh2;
     
-    shtp_service(pSh2->pShtp);
+    return shtp_service(pSh2->pShtp);
 }
 
 /**

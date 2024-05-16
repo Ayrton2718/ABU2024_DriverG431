@@ -450,7 +450,7 @@ void sh2_close(void);
  * This function should be called periodically by the host system to service an open sensor hub.
  *
  */
-void sh2_service(void);
+uint8_t sh2_service(void);
 
 /**
  * @brief Register a function to receive sensor events.

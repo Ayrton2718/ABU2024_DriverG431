@@ -798,7 +798,7 @@ int shtp_send(void *pInstance,
 }
 
 // Check for received data and process it.
-void shtp_service(void *pInstance)
+uint8_t shtp_service(void *pInstance)
 {
     shtp_t *pShtp = (shtp_t *)pInstance;
     uint32_t t_us = 0;
@@ -815,5 +815,8 @@ void shtp_service(void *pInstance)
     int len = pShtp->pHal->read(pShtp->pHal, pShtp->inTransfer, sizeof(pShtp->inTransfer), &t_us);
     if (len) {
         rxAssemble(pShtp, pShtp->inTransfer, len, t_us);
+        return SH2_OK;
+    }else{
+        return SH2_ERR;
     }
 }

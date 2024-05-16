@@ -17,11 +17,14 @@
 #ifndef _ADAFRUIT_BNO08x_H
 #define _ADAFRUIT_BNO08x_H
 
-// #include ""
+#include "../can_smbus/cs_led.h"
+#include "../can_smbus/cs_timer.h"
 
 #include "sh2.h"
 #include "sh2_SensorValue.h"
 #include "sh2_err.h"
+
+#define BNO08x_HANDLE (&hi2c3)
 
 #define BNO08x_I2CADDR_DEFAULT 0x4A ///< The default I2C address
 
@@ -36,17 +39,11 @@
  */
 class Adafruit_BNO08x {
 public:
-  Adafruit_BNO08x(int8_t reset_pin = -1);
+  Adafruit_BNO08x();
   ~Adafruit_BNO08x();
 
-  bool begin_I2C(uint8_t i2c_addr = BNO08x_I2CADDR_DEFAULT,
-                 TwoWire *wire = &Wire, int32_t sensor_id = 0);
-  bool begin_UART(HardwareSerial *serial, int32_t sensor_id = 0);
+  bool begin_I2C(uint8_t i2c_addr = BNO08x_I2CADDR_DEFAULT, int32_t sensor_id = 0);
 
-  bool begin_SPI(uint8_t cs_pin, uint8_t int_pin, SPIClass *theSPI = &SPI,
-                 int32_t sensor_id = 0);
-
-  void hardwareReset(void);
   bool wasReset(void);
 
   bool enableReport(sh2_SensorId_t sensor, uint32_t interval_us = 10000);

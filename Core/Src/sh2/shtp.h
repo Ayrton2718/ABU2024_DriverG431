@@ -86,7 +86,7 @@ int shtp_send(void *pShtp,
               uint8_t channel, const uint8_t *payload, uint16_t len);
 
 // Check for received data and process it.
-void shtp_service(void *pShtp);
+uint8_t shtp_service(void *pShtp);
 
 // #ifdef SHTP_H
 #endif
