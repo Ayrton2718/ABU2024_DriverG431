@@ -32,12 +32,8 @@
 
 /* USER CODE END 1 */
 
-/** Configure pins as
-        * Analog
-        * Input
-        * Output
-        * EVENT_OUT
-        * EXTI
+/** Configure pins
+     PA10   ------> S_TIM1_CH3
 */
 void MX_GPIO_Init(void)
 {
@@ -50,47 +46,53 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, START_LED_Pin|BOOT_ERR_LED_Pin|BOOTING_LED_Pin|BOOTED_LED_Pin
-                          |RED_ZONE_LED_Pin|LED_ERR_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED_START_Pin|LED_BOOT_ERR_Pin|LED_BOOTING_Pin|LED_RUNNING_Pin
+                          |LED_RED_ZONE_Pin|LED_ERR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, BLUE_ZONE_LED_Pin|LED_ID_Pin|LED_TX_Pin|LED_RX_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED_BLUE_ZONE_Pin|LED_RETRY_Pin|LED_TX_Pin|LED_RX_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = POWER_SW_Pin;
+  GPIO_InitStruct.Pin = SW_START_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(POWER_SW_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SW_START_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = START_SW_Pin;
+  GPIO_InitStruct.Pin = SW_24V_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(START_SW_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SW_24V_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PAPin PAPin PAPin PAPin
-                           PAPin */
-  GPIO_InitStruct.Pin = BOOT_SW_Pin|KILL_SW_Pin|S_OR_R_SW_Pin|ZONE_SW_Pin
-                          |BTN_ID_Pin;
+  /*Configure GPIO pins : PAPin PAPin PAPin PAPin */
+  GPIO_InitStruct.Pin = SW_BOOT_Pin|SW_KILL_Pin|SW_RETRY_Pin|SW_ZONE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PAPin PAPin PAPin PAPin
                            PAPin PAPin */
-  GPIO_InitStruct.Pin = START_LED_Pin|BOOT_ERR_LED_Pin|BOOTING_LED_Pin|BOOTED_LED_Pin
-                          |RED_ZONE_LED_Pin|LED_ERR_Pin;
+  GPIO_InitStruct.Pin = LED_START_Pin|LED_BOOT_ERR_Pin|LED_BOOTING_Pin|LED_RUNNING_Pin
+                          |LED_RED_ZONE_Pin|LED_ERR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PBPin PBPin PBPin PBPin */
-  GPIO_InitStruct.Pin = BLUE_ZONE_LED_Pin|LED_ID_Pin|LED_TX_Pin|LED_RX_Pin;
+  GPIO_InitStruct.Pin = LED_BLUE_ZONE_Pin|LED_RETRY_Pin|LED_TX_Pin|LED_RX_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 

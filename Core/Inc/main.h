@@ -57,40 +57,40 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define POWER_SW_Pin GPIO_PIN_1
-#define POWER_SW_GPIO_Port GPIOF
-#define START_SW_Pin GPIO_PIN_0
-#define START_SW_GPIO_Port GPIOA
-#define BOOT_SW_Pin GPIO_PIN_1
-#define BOOT_SW_GPIO_Port GPIOA
-#define START_LED_Pin GPIO_PIN_2
-#define START_LED_GPIO_Port GPIOA
-#define KILL_SW_Pin GPIO_PIN_3
-#define KILL_SW_GPIO_Port GPIOA
-#define BOOT_ERR_LED_Pin GPIO_PIN_4
-#define BOOT_ERR_LED_GPIO_Port GPIOA
-#define BOOTING_LED_Pin GPIO_PIN_5
-#define BOOTING_LED_GPIO_Port GPIOA
-#define BOOTED_LED_Pin GPIO_PIN_6
-#define BOOTED_LED_GPIO_Port GPIOA
-#define RED_ZONE_LED_Pin GPIO_PIN_7
-#define RED_ZONE_LED_GPIO_Port GPIOA
-#define BLUE_ZONE_LED_Pin GPIO_PIN_0
-#define BLUE_ZONE_LED_GPIO_Port GPIOB
-#define S_OR_R_SW_Pin GPIO_PIN_8
-#define S_OR_R_SW_GPIO_Port GPIOA
-#define ZONE_SW_Pin GPIO_PIN_9
-#define ZONE_SW_GPIO_Port GPIOA
-#define BTN_ID_Pin GPIO_PIN_10
-#define BTN_ID_GPIO_Port GPIOA
+#define SW_START_Pin GPIO_PIN_1
+#define SW_START_GPIO_Port GPIOF
+#define SW_24V_Pin GPIO_PIN_0
+#define SW_24V_GPIO_Port GPIOA
+#define SW_BOOT_Pin GPIO_PIN_1
+#define SW_BOOT_GPIO_Port GPIOA
+#define LED_START_Pin GPIO_PIN_2
+#define LED_START_GPIO_Port GPIOA
+#define SW_KILL_Pin GPIO_PIN_3
+#define SW_KILL_GPIO_Port GPIOA
+#define LED_BOOT_ERR_Pin GPIO_PIN_4
+#define LED_BOOT_ERR_GPIO_Port GPIOA
+#define LED_BOOTING_Pin GPIO_PIN_5
+#define LED_BOOTING_GPIO_Port GPIOA
+#define LED_RUNNING_Pin GPIO_PIN_6
+#define LED_RUNNING_GPIO_Port GPIOA
+#define LED_RED_ZONE_Pin GPIO_PIN_7
+#define LED_RED_ZONE_GPIO_Port GPIOA
+#define LED_BLUE_ZONE_Pin GPIO_PIN_0
+#define LED_BLUE_ZONE_GPIO_Port GPIOB
+#define SW_RETRY_Pin GPIO_PIN_8
+#define SW_RETRY_GPIO_Port GPIOA
+#define SW_ZONE_Pin GPIO_PIN_9
+#define SW_ZONE_GPIO_Port GPIOA
 #define LED_ERR_Pin GPIO_PIN_15
 #define LED_ERR_GPIO_Port GPIOA
-#define LED_ID_Pin GPIO_PIN_4
-#define LED_ID_GPIO_Port GPIOB
+#define LED_RETRY_Pin GPIO_PIN_4
+#define LED_RETRY_GPIO_Port GPIOB
 #define LED_TX_Pin GPIO_PIN_5
 #define LED_TX_GPIO_Port GPIOB
 #define LED_RX_Pin GPIO_PIN_6
 #define LED_RX_GPIO_Port GPIOB
+#define SW_AREA_Pin GPIO_PIN_7
+#define SW_AREA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
