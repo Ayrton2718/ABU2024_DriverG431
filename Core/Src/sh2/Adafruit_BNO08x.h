@@ -24,7 +24,7 @@
 #include "sh2_SensorValue.h"
 #include "sh2_err.h"
 
-#define BNO08x_HANDLE (&hi2c3)
+#define BNO08x_HANDLE (&hi2c2)
 
 #define BNO08x_I2CADDR_DEFAULT 0x4A ///< The default I2C address
 

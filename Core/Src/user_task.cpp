@@ -19,7 +19,7 @@ static Adafruit_BNO08x  g_bno08x;
 
 static yaw_t  g_yaw_reg;
 
-static sh2_SensorValue_t sensorValue;
+// static sh2_SensorValue_t sensorValue;
 
 static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len);
 static void UserTask_resetCallback(void);
@@ -60,8 +60,7 @@ void UserTask_loop(void)
     {
         CSTimer_start(&g_tim);
 
-//        sh2_SensorValue_t sensorValue;
-
+        sh2_SensorValue_t sensorValue;
         if (g_bno08x.getSensorEvent(&sensorValue)) {
             quaternionToEulerGI(&sensorValue.un.gyroIntegratedRV, &g_yaw_reg);
         }else{
