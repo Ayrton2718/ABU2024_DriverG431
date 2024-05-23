@@ -11,7 +11,13 @@ extern "C" {
 typedef struct{
     int16_t rot_count;
     uint16_t angle;
+    uint8_t checksum;
 }__attribute__((__packed__)) count_t;
+
+uint8_t calc_checksum(count_t count){
+    uint8_t* data = (uint8_t*)&count;
+    return data[0] + data[1] + data[2] + data[3];
+}
 
 }
 
@@ -76,6 +82,7 @@ void UserTask_loop(void)
             count_t reg;
             reg.angle = g_count_reg.angle;
             reg.rot_count = g_count_reg.rot_count;
+            reg.checksum = calc_checksum(reg);
             CSIo_sendUser(CSReg_0, (const uint8_t*)&reg, sizeof(count_t));
         }else{
             CSLed_err();
