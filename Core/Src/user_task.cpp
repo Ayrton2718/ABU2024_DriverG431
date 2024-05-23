@@ -9,6 +9,7 @@ extern "C" {
 
 typedef struct{
     int32_t count;
+    int16_t pulse_ms; // pulse per milli second
 }__attribute__((__packed__)) count_t;
 
 }
@@ -17,6 +18,7 @@ static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size
 static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
+static int32_t g_befor_count;
 static count_t g_count_reg;
 
 static bool g_rst_flg;
@@ -26,6 +28,7 @@ void UserTask_setup(void)
 {
     HAL_TIM_Encoder_Start(ENC_TIM, TIM_CHANNEL_ALL);
     __HAL_TIM_SET_COUNTER(ENC_TIM, 0);
+    g_befor_count = 0;
 
     g_rst_flg = false;
 
@@ -39,7 +42,10 @@ void UserTask_loop(void)
     uint32_t us = CSTimer_getUs(g_tim);
     if(1000 < us)
     {
-        g_count_reg.count = __HAL_TIM_GET_COUNTER(ENC_TIM);
+        int32_t count = __HAL_TIM_GET_COUNTER(ENC_TIM);
+        g_count_reg.count = count;
+        g_count_reg.pulse_ms = count - g_befor_count;
+        g_befor_count = count;
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_count_reg, sizeof(count_t));
         CSTimer_start(&g_tim);
     }
