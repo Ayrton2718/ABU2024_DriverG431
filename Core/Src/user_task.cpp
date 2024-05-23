@@ -91,8 +91,9 @@ void UserTask_loop(void)
 
     if(g_rst_flg)
     {
-        g_count_reg.rot_count = 0;
-        g_count_reg.angle = 0;
+        // 値を保持する（操舵用）
+        // g_count_reg.rot_count = 0;
+        // g_count_reg.angle = 0;
         g_rst_flg = 0;
     }
 }
