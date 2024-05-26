@@ -4,7 +4,8 @@
 #include "cs_panel_type.h"
 
 #include <array>
-#define PWM_HANDLE ((&htim3))
+#define BUZZER_HANDLE ((&htim3))
+#define BUZZER_CHANNEL ((TIM_CHANNEL_4))
 
 static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len);
 static void UserTask_resetCallback(void);
@@ -20,6 +21,9 @@ void UserTask_setup(void)
 {
     g_rst_flg = false;
 
+    HAL_TIM_PWM_Start(BUZZER_HANDLE, BUZZER_CHANNEL);
+    __HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 0);
+
     CSTimer_start(&g_tim);
     CSIo_bind(CSType_appid_PANEL, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
@@ -32,12 +36,12 @@ void UserTask_loop(void)
     {
         CSTimer_start(&g_tim);
 
-        g_s2m.red_zone = HAL_GPIO_ReadPin(ZONE_SW_GPIO_Port, ZONE_SW_Pin);
-        g_s2m.start_or_retry = HAL_GPIO_ReadPin(S_OR_R_SW_GPIO_Port, S_OR_R_SW_Pin);
-        g_s2m.power_24v = !HAL_GPIO_ReadPin(POWER_SW_GPIO_Port, POWER_SW_Pin);
-        g_s2m.start = !HAL_GPIO_ReadPin(START_SW_GPIO_Port, START_SW_Pin);
-        g_s2m.boot = HAL_GPIO_ReadPin(BOOT_SW_GPIO_Port, BOOT_SW_Pin);
-        g_s2m.kill = HAL_GPIO_ReadPin(KILL_SW_GPIO_Port, KILL_SW_Pin);
+        g_s2m.red_zone = HAL_GPIO_ReadPin(SW_ZONE_GPIO_Port, SW_ZONE_Pin);
+        g_s2m.start_or_retry = HAL_GPIO_ReadPin(SW_RETRY_GPIO_Port, SW_RETRY_Pin);
+        g_s2m.power_24v = !HAL_GPIO_ReadPin(SW_24V_GPIO_Port, SW_24V_Pin);
+        g_s2m.start = !HAL_GPIO_ReadPin(SW_START_GPIO_Port, SW_START_Pin);
+        g_s2m.boot = HAL_GPIO_ReadPin(SW_BOOT_GPIO_Port, SW_BOOT_Pin);
+        g_s2m.kill = HAL_GPIO_ReadPin(SW_KILL_GPIO_Port, SW_KILL_Pin);
 
         uint8_t* buff = (uint8_t*)&g_s2m;
         buff[1] = buff[0]; 
@@ -45,27 +49,23 @@ void UserTask_loop(void)
 
 
 
-        HAL_GPIO_WritePin(START_LED_GPIO_Port, START_LED_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(BOOTED_LED_GPIO_Port, BOOTED_LED_Pin, (GPIO_PinState)g_m2s.booted);
-        HAL_GPIO_WritePin(BOOTING_LED_GPIO_Port, BOOTING_LED_Pin, (GPIO_PinState)g_m2s.booting);
-        HAL_GPIO_WritePin(BOOT_ERR_LED_GPIO_Port, BOOT_ERR_LED_Pin, (GPIO_PinState)g_m2s.boot_err);
-        HAL_GPIO_WritePin(RED_ZONE_LED_GPIO_Port, RED_ZONE_LED_Pin, (GPIO_PinState)g_m2s.is_red_zone);
-        HAL_GPIO_WritePin(BLUE_ZONE_LED_GPIO_Port, BLUE_ZONE_LED_Pin, (GPIO_PinState)g_m2s.is_blue_zone);
+        HAL_GPIO_WritePin(LED_START_GPIO_Port, LED_START_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin, (GPIO_PinState)g_m2s.booted);
+        HAL_GPIO_WritePin(LED_BOOTING_GPIO_Port, LED_BOOTING_Pin, (GPIO_PinState)g_m2s.booting);
+        HAL_GPIO_WritePin(LED_BOOT_ERR_GPIO_Port, LED_BOOT_ERR_Pin, (GPIO_PinState)g_m2s.boot_err);
+        HAL_GPIO_WritePin(LED_RED_ZONE_GPIO_Port, LED_RED_ZONE_Pin, (GPIO_PinState)g_m2s.is_red_zone);
+        HAL_GPIO_WritePin(LED_BLUE_ZONE_GPIO_Port, LED_BLUE_ZONE_Pin, (GPIO_PinState)g_m2s.is_blue_zone);
         
 		if (g_m2s.io_err) {
-			HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_4);
-			__HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_4, 100);
+			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
 
 		}else if (g_m2s.ros_err1) {
-			HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_4);
-			__HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_4, 100);
+			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
 
 		}else if (g_m2s.ros_err2) {
-			HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_4);
-			__HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_4, 100);
+			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
 		}else {
-			HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_4);
-			__HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_4, 0);
+			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 0);
 		}
     }
 

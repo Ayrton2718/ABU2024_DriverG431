@@ -79,8 +79,8 @@ void Error_Handler(void);
 #define LED_BLUE_ZONE_GPIO_Port GPIOB
 #define SW_RETRY_Pin GPIO_PIN_8
 #define SW_RETRY_GPIO_Port GPIOA
-#define SW_ZONE_Pin GPIO_PIN_9
-#define SW_ZONE_GPIO_Port GPIOA
+#define SW_NONE_Pin GPIO_PIN_9
+#define SW_NONE_GPIO_Port GPIOA
 #define LED_ERR_Pin GPIO_PIN_15
 #define LED_ERR_GPIO_Port GPIOA
 #define LED_RETRY_Pin GPIO_PIN_4
@@ -89,8 +89,8 @@ void Error_Handler(void);
 #define LED_TX_GPIO_Port GPIOB
 #define LED_RX_Pin GPIO_PIN_6
 #define LED_RX_GPIO_Port GPIOB
-#define SW_AREA_Pin GPIO_PIN_7
-#define SW_AREA_GPIO_Port GPIOB
+#define SW_ZONE_Pin GPIO_PIN_7
+#define SW_ZONE_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
