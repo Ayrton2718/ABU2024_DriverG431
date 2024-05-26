@@ -28,7 +28,8 @@ static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte);
 
 static bool g_rst_flg;
 
-volatile static count_t g_count_reg;
+static bool g_at_first = true;
+static volatile count_t g_count_reg;
 static uint8_t  g_id;
 
 static CSTimer_t g_tim;
@@ -39,8 +40,11 @@ uint8_t g_rx_data[2] = {0};
 
 void UserTask_setup(void)
 {
+	HAL_Delay(200); // startup time
+
 	g_id = AMT212B_ID;
 
+    g_at_first = true;
     g_count_reg.rot_count = 0;
     g_count_reg.angle = 0;
 
@@ -57,7 +61,7 @@ void UserTask_setup(void)
 void UserTask_loop(void)
 {
     uint32_t us = CSTimer_getUs(g_tim);
-    if(300 < us)
+    if(195 < us)
     {
         CSTimer_start(&g_tim);
 
@@ -131,6 +135,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
         if(UserTask_checksum(g_rx_data[0], g_rx_data[1]))
         {
+            if(g_at_first){
+                g_count_reg.angle = ((g_rx_data[1] & 0x3F) << 8 | g_rx_data[0]);
+                g_count_reg.rot_count = 0;
+                g_at_first = false;
+                return;
+            }
+
             uint16_t last_angle = g_count_reg.angle;
 
             uint16_t now_angle = ((g_rx_data[1] & 0x3F) << 8 | g_rx_data[0]);
