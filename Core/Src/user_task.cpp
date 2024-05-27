@@ -2,6 +2,7 @@
 #include "can_smbus/can_smbus.hpp"
 
 #include "usart.h"
+#include <stdlib.h>
 
 #define RS485_HUART ((&huart2))
 #define AMT212B_ID 	(0x54)
@@ -36,7 +37,7 @@ static CSTimer_t g_tim;
 static CSTimer_t g_send_tim;
 static CSTimer_t g_timeout;
 
-uint8_t g_rx_data[2] = {0};
+static uint8_t g_rx_buff[2];
 
 void UserTask_setup(void)
 {
@@ -50,6 +51,8 @@ void UserTask_setup(void)
 
     g_rst_flg = false;
 
+    HAL_UART_Receive_DMA(RS485_HUART, g_rx_buff, sizeof(g_rx_buff));
+
     CSTimer_start(&g_tim);
     CSTimer_start(&g_send_tim);
     CSTimer_start(&g_timeout);
@@ -61,17 +64,19 @@ void UserTask_setup(void)
 void UserTask_loop(void)
 {
     uint32_t us = CSTimer_getUs(g_tim);
-    if(195 < us)
+    if(256 < us)
     {
         CSTimer_start(&g_tim);
 
-        g_rx_data[0] = 0;
-        g_rx_data[1] = 0;
-        if(HAL_UART_Receive_IT(RS485_HUART, g_rx_data, 2) != HAL_OK)
+        g_rx_buff[0] = 0;
+        g_rx_buff[1] = 0;
+
+        if(HAL_UART_Transmit(RS485_HUART, &g_id, 1, 10) != HAL_OK)
         {
             CSLed_err();
         }
-        if(HAL_UART_Transmit(RS485_HUART, &g_id, 1, 10) != HAL_OK)
+
+        if(10 < CSTimer_getMs(g_timeout))
         {
             CSLed_err();
         }
@@ -121,7 +126,7 @@ static void UserTask_resetCallback(void)
 	g_rst_flg = 1;
 }
 
-static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte) {
+static inline bool UserTask_checksum(uint8_t high_byte, uint8_t low_byte) {
     auto l = [&](uint8_t i) { return (bool)((low_byte >> i) & 0x01); };
     auto h = [&](uint8_t i) { return (bool)((high_byte >> i) & 0x01); };
     bool k1 = !(h(5) ^ h(3) ^ h(1) ^ l(7) ^ l(5) ^ l(3) ^ l(1));
@@ -129,40 +134,65 @@ static bool UserTask_checksum(uint8_t low_byte, uint8_t high_byte) {
     return (k1 == h(7)) && (k0 == h(6));
 }
 
+static inline bool receive(uint8_t high_byte, uint8_t low_byte)
+{
+    int16_t now_rot = g_count_reg.rot_count;
+    uint16_t now_angle = ((uint16_t)high_byte & 0x3F) << 8 | low_byte;
+    if(g_count_reg.angle < now_angle)
+    {
+        if(8192 < (now_angle - g_count_reg.angle))
+        {
+            now_rot--;
+        }
+    }else{
+        if(8192 < (g_count_reg.angle - now_angle))
+        {
+            now_rot++;
+        }
+    }
+
+    int16_t diff_rot = now_rot - g_count_reg.rot_count;
+    int16_t diff_angle = ((int32_t)now_angle - (int32_t)g_count_reg.angle) + (int32_t)diff_rot * 16383;
+
+    if(abs(diff_angle) < 1000){
+        g_count_reg.rot_count = now_rot;
+        g_count_reg.angle = now_angle;
+        CSTimer_start(&g_timeout);
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == RS485_HUART->Instance)
 	{
-        if(UserTask_checksum(g_rx_data[0], g_rx_data[1]))
+        uint16_t write_idx = sizeof(g_rx_buff) - __HAL_DMA_GET_COUNTER(RS485_HUART->hdmarx);
+        uint8_t low_byte =  g_rx_buff[(write_idx + (sizeof(g_rx_buff) - 2)) % sizeof(g_rx_buff)];
+        uint8_t high_byte = g_rx_buff[(write_idx + (sizeof(g_rx_buff) - 1)) % sizeof(g_rx_buff)];
+        if(UserTask_checksum(high_byte, low_byte))
         {
             if(g_at_first){
-                g_count_reg.angle = ((g_rx_data[1] & 0x3F) << 8 | g_rx_data[0]);
+                g_count_reg.angle = ((uint16_t)high_byte & 0x3F) << 8 | low_byte;
                 g_count_reg.rot_count = 0;
                 g_at_first = false;
                 return;
             }
 
-            uint16_t last_angle = g_count_reg.angle;
-
-            uint16_t now_angle = ((g_rx_data[1] & 0x3F) << 8 | g_rx_data[0]);
-
-            if(last_angle < now_angle)
+            if(receive(high_byte, low_byte))
             {
-                if(8192 < (now_angle - last_angle))
-                {
-                    g_count_reg.rot_count--;
-                }
-            }else{
-                if(8192 < (last_angle - now_angle))
-                {
-                    g_count_reg.rot_count++;
-                }
+                return;
             }
+        }
 
-            g_count_reg.angle = now_angle;
-            CSTimer_start(&g_timeout);
-        }else{
-            CSLed_err();
+        if(UserTask_checksum(low_byte, high_byte))
+        {
+            if(receive(low_byte, high_byte))
+            {
+                return;
+            }
         }
 	}
 }
