@@ -7,9 +7,12 @@
 extern "C" {
 
 typedef struct{
-	uint8_t sw;
-	uint8_t filter_sw;
-	uint16_t count;
+	uint8_t sw_0;
+	uint8_t filter_sw_0;
+	uint16_t count_0;
+	uint8_t sw_1;
+	uint8_t filter_sw_1;
+	uint16_t count_1;
 }__attribute__((__packed__)) switch_t;
 
 //inline bool get_sw(switch_t* SW){
@@ -26,12 +29,13 @@ static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size
 static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
-static std::array<switch_t, 4> g_sw_reg;
+static std::array<switch_t, 2> g_sw_reg;
 static bool g_rst_flg;
 static CSTimer_t g_tim;
 
 static std::array<std::pair<GPIO_TypeDef*, uint16_t >, 4> g_sw_pins;
 
+static std::array<bool, 4> g_raw_sw;
 static std::array<tut_mec_filter::Cos_Filter, 4> g_sw_filter;
 static std::array<bool, 4> g_sw_data;
 static std::array<bool, 4> g_sw_click;
@@ -54,7 +58,8 @@ void UserTask_setup(void)
     CSIo_bind(CSType_appid_SWITCH, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
 
-    for(size_t i; i < g_sw_data.size(); i++){
+    for(size_t i = 0; i < g_sw_data.size(); i++){
+    	g_raw_sw[i] = false;
     	g_sw_data[i] = false;
     	g_sw_click[i] = false;
     	g_sw_click_counter[i] = 0;
@@ -73,13 +78,13 @@ void UserTask_loop(void)
         for(size_t i = 0; i < g_sw_pins.size(); i++)
         {
             if(HAL_GPIO_ReadPin(g_sw_pins[i].first, g_sw_pins[i].second) == GPIO_PIN_SET){
-            	g_sw_reg[i].sw = false;
+            	g_raw_sw[i] = false;
             }else{
-            	g_sw_reg[i].sw = true;
+            	g_raw_sw[i] = true;
             }
 
             // ここからR2専用
-            float filter_output = g_sw_filter[i].Cal_Data((float)g_sw_reg[i].sw, sec);
+            float filter_output = g_sw_filter[i].Cal_Data((float)g_raw_sw[i], sec);
             if(ttl_h < filter_output && !g_sw_data[i]){
             	g_sw_data[i] = true;
             	g_sw_click[i] = true;
@@ -97,15 +102,24 @@ void UserTask_loop(void)
             	g_sw_click[i] = false;
             }
 
-            g_sw_reg[i].filter_sw = (uint8_t)g_sw_data[i];
-            g_sw_reg[i].count = g_sw_click_counter[i];
-
         }
+
+        g_sw_reg[0].sw_0 = g_raw_sw[0];
+        g_sw_reg[0].filter_sw_0 = g_sw_data[0];
+        g_sw_reg[0].count_0 = g_sw_click_counter[0];
+        g_sw_reg[0].sw_1 = g_raw_sw[1];
+        g_sw_reg[0].filter_sw_1 = g_sw_data[1];
+        g_sw_reg[0].count_1 = g_sw_click_counter[1];
+
+        g_sw_reg[1].sw_0 = g_raw_sw[2];
+		g_sw_reg[1].filter_sw_0 = g_sw_data[2];
+		g_sw_reg[1].count_0 = g_sw_click_counter[2];
+		g_sw_reg[1].sw_1 = g_raw_sw[3];
+		g_sw_reg[1].filter_sw_1 = g_sw_data[3];
+		g_sw_reg[1].count_1 = g_sw_click_counter[3];
 
 		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_sw_reg[0], sizeof(switch_t));
 		CSIo_sendUser(CSReg_1, (const uint8_t*)&g_sw_reg[1], sizeof(switch_t));
-		CSIo_sendUser(CSReg_2, (const uint8_t*)&g_sw_reg[2], sizeof(switch_t));
-//		CSIo_sendUser(CSReg_4, (const uint8_t*)&g_sw_reg[3], sizeof(switch_t));
     }
 
     if(g_rst_flg)
