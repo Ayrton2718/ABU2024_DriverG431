@@ -7,46 +7,28 @@
 extern "C" {
 
 typedef struct{
-    uint8_t list1;
+	uint8_t sw;
+	uint8_t filter_sw;
+	uint16_t count;
 }__attribute__((__packed__)) switch_t;
 
-typedef struct{
-	uint16_t count1;
-	uint16_t count2;
-	uint16_t count3;
-	uint16_t count4;
-}__attribute__((__packed__)) count_t;
-
-
-inline bool get_sw(uint8_t* list, int index){
-    if (index < 0 || index > 7) {
-        return false;
-    }
-    return (*list >> index) & 1;
-}
-
-// 指定されたインデックスにbool値を設定する関数
-inline void set_sw(uint8_t* list, int index, bool value) {
-    if (index < 0 || index > 7) {
-        return;
-    }
-    if (value) {
-        *list |= (1 << index); // 指定されたビットを1に設定
-    } else {
-        *list &= ~(1 << index); // 指定されたビットを0に設定
-    }
-}
+//inline bool get_sw(switch_t* SW){
+//    return SW->sw == 0 ? false : true;
+//}
+//
+//// 指定されたインデックスにbool値を設定する関数
+//inline void set_sw(switch_t* SW, bool VALUE) {
+//    SW->sw = (uint8_t)VALUE;
+//}
 }
 
 static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len);
 static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
-static switch_t g_sw_reg;
+static std::array<switch_t, 4> g_sw_reg;
 static bool g_rst_flg;
 static CSTimer_t g_tim;
-
-static count_t g_count;
 
 static std::array<std::pair<GPIO_TypeDef*, uint16_t >, 4> g_sw_pins;
 
@@ -76,7 +58,7 @@ void UserTask_setup(void)
     	g_sw_data[i] = false;
     	g_sw_click[i] = false;
     	g_sw_click_counter[i] = 0;
-    	g_sw_filter[i].init(0.004, 0.001);
+    	g_sw_filter[i].init(0.01, 0.001);
     }
 }
 
@@ -91,13 +73,13 @@ void UserTask_loop(void)
         for(size_t i = 0; i < g_sw_pins.size(); i++)
         {
             if(HAL_GPIO_ReadPin(g_sw_pins[i].first, g_sw_pins[i].second) == GPIO_PIN_SET){
-                set_sw(&g_sw_reg.list1, i, false);
+            	g_sw_reg[i].sw = false;
             }else{
-                set_sw(&g_sw_reg.list1, i, true);
+            	g_sw_reg[i].sw = true;
             }
 
             // ここからR2専用
-            float filter_output = g_sw_filter[i].Cal_Data((float)get_sw(&g_sw_reg.list1, i), sec);
+            float filter_output = g_sw_filter[i].Cal_Data((float)g_sw_reg[i].sw, sec);
             if(ttl_h < filter_output && !g_sw_data[i]){
             	g_sw_data[i] = true;
             	g_sw_click[i] = true;
@@ -115,15 +97,15 @@ void UserTask_loop(void)
             	g_sw_click[i] = false;
             }
 
+            g_sw_reg[i].filter_sw = (uint8_t)g_sw_data[i];
+            g_sw_reg[i].count = g_sw_click_counter[i];
+
         }
 
-        g_count.count1 = g_sw_click_counter[0];
-        g_count.count2 = g_sw_click_counter[1];
-        g_count.count3 = g_sw_click_counter[2];
-        g_count.count4 = g_sw_click_counter[3];
-
-		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_sw_reg, sizeof(switch_t));
-		CSIo_sendUser(CSReg_1, (const uint8_t*)&g_count, sizeof(count_t));
+		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_sw_reg[0], sizeof(switch_t));
+		CSIo_sendUser(CSReg_1, (const uint8_t*)&g_sw_reg[1], sizeof(switch_t));
+		CSIo_sendUser(CSReg_2, (const uint8_t*)&g_sw_reg[2], sizeof(switch_t));
+//		CSIo_sendUser(CSReg_4, (const uint8_t*)&g_sw_reg[3], sizeof(switch_t));
     }
 
     if(g_rst_flg)
