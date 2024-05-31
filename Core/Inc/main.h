@@ -57,14 +57,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define SW_START_Pin GPIO_PIN_1
-#define SW_START_GPIO_Port GPIOF
-#define SW_24V_Pin GPIO_PIN_0
-#define SW_24V_GPIO_Port GPIOA
+#define SW_24V_Pin GPIO_PIN_1
+#define SW_24V_GPIO_Port GPIOF
+#define SW_START_Pin GPIO_PIN_0
+#define SW_START_GPIO_Port GPIOA
 #define SW_BOOT_Pin GPIO_PIN_1
 #define SW_BOOT_GPIO_Port GPIOA
-#define LED_START_Pin GPIO_PIN_2
-#define LED_START_GPIO_Port GPIOA
+#define LED_STRATEGY_Pin GPIO_PIN_2
+#define LED_STRATEGY_GPIO_Port GPIOA
 #define SW_KILL_Pin GPIO_PIN_3
 #define SW_KILL_GPIO_Port GPIOA
 #define LED_BOOT_ERR_Pin GPIO_PIN_4
@@ -77,10 +77,10 @@ void Error_Handler(void);
 #define LED_RED_ZONE_GPIO_Port GPIOA
 #define LED_BLUE_ZONE_Pin GPIO_PIN_0
 #define LED_BLUE_ZONE_GPIO_Port GPIOB
-#define SW_RETRY_Pin GPIO_PIN_8
+#define SW_STRATEGY_Pin GPIO_PIN_8
+#define SW_STRATEGY_GPIO_Port GPIOA
+#define SW_RETRY_Pin GPIO_PIN_9
 #define SW_RETRY_GPIO_Port GPIOA
-#define SW_NONE_Pin GPIO_PIN_9
-#define SW_NONE_GPIO_Port GPIOA
 #define LED_ERR_Pin GPIO_PIN_15
 #define LED_ERR_GPIO_Port GPIOA
 #define LED_RETRY_Pin GPIO_PIN_4

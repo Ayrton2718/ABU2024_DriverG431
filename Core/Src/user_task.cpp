@@ -36,34 +36,29 @@ void UserTask_loop(void)
     {
         CSTimer_start(&g_tim);
 
-        g_s2m.red_zone = HAL_GPIO_ReadPin(SW_ZONE_GPIO_Port, SW_ZONE_Pin);
+        g_s2m.red_zone = !HAL_GPIO_ReadPin(SW_ZONE_GPIO_Port, SW_ZONE_Pin);
         g_s2m.start_or_retry = HAL_GPIO_ReadPin(SW_RETRY_GPIO_Port, SW_RETRY_Pin);
         g_s2m.power_24v = !HAL_GPIO_ReadPin(SW_24V_GPIO_Port, SW_24V_Pin);
         g_s2m.start = !HAL_GPIO_ReadPin(SW_START_GPIO_Port, SW_START_Pin);
         g_s2m.boot = HAL_GPIO_ReadPin(SW_BOOT_GPIO_Port, SW_BOOT_Pin);
         g_s2m.kill = HAL_GPIO_ReadPin(SW_KILL_GPIO_Port, SW_KILL_Pin);
+        g_s2m.strategy = HAL_GPIO_ReadPin(SW_STRATEGY_GPIO_Port, SW_STRATEGY_Pin);
 
         uint8_t* buff = (uint8_t*)&g_s2m;
         buff[1] = buff[0]; 
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_s2m, sizeof(CSPanel_s2m_t));
 
-
-
-        HAL_GPIO_WritePin(LED_START_GPIO_Port, LED_START_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin, (GPIO_PinState)g_m2s.booted);
+        HAL_GPIO_WritePin(LED_RUNNING_GPIO_Port, LED_RUNNING_Pin, (GPIO_PinState)g_m2s.running);
         HAL_GPIO_WritePin(LED_BOOTING_GPIO_Port, LED_BOOTING_Pin, (GPIO_PinState)g_m2s.booting);
         HAL_GPIO_WritePin(LED_BOOT_ERR_GPIO_Port, LED_BOOT_ERR_Pin, (GPIO_PinState)g_m2s.boot_err);
         HAL_GPIO_WritePin(LED_RED_ZONE_GPIO_Port, LED_RED_ZONE_Pin, (GPIO_PinState)g_m2s.is_red_zone);
         HAL_GPIO_WritePin(LED_BLUE_ZONE_GPIO_Port, LED_BLUE_ZONE_Pin, (GPIO_PinState)g_m2s.is_blue_zone);
+        HAL_GPIO_WritePin(LED_RETRY_GPIO_Port, LED_RETRY_Pin, (GPIO_PinState)g_m2s.retry);
+        HAL_GPIO_WritePin(LED_STRATEGY_GPIO_Port, LED_STRATEGY_Pin, (GPIO_PinState)g_m2s.strategy);
         
 		if (g_m2s.io_err) {
 			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
 
-		}else if (g_m2s.ros_err1) {
-			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
-
-		}else if (g_m2s.ros_err2) {
-			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
 		}else {
 			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 0);
 		}
