@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#define CS_ID_FIXED_ADDR (CSId_8)
+#define CS_ID_FIXED_ADDR (CSId_1)
 
 void CSId_init(void);
 

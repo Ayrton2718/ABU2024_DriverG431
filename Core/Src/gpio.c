@@ -70,17 +70,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = LED_STRATEGY_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_STRATEGY_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PAPin PAPin PAPin PAPin
-                           PAPin */
-  GPIO_InitStruct.Pin = LED_BOOT_ERR_Pin|LED_BOOTING_Pin|LED_RUNNING_Pin|LED_RED_ZONE_Pin
-                          |LED_ERR_Pin;
+                           PAPin PAPin */
+  GPIO_InitStruct.Pin = LED_STRATEGY_Pin|LED_BOOT_ERR_Pin|LED_BOOTING_Pin|LED_RUNNING_Pin
+                          |LED_RED_ZONE_Pin|LED_ERR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
