@@ -81,7 +81,7 @@ void UserTask_loop(void)
 				set_sw(&g_sw_reg.list1, i, true);
 			}
 		}
-		CSIo_sendUser(CSReg_1, (const uint8_t*)&g_sw_reg, sizeof(switch_t));
+		CSIo_sendUser(CSReg_0, (const uint8_t*)&g_sw_reg, sizeof(switch_t));
     }
 
     if(g_rst_flg){
