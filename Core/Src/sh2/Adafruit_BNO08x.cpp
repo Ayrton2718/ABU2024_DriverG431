@@ -237,7 +237,7 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
     // uint8_t *pBufferOrig = pBuffer;
 
     uint8_t header[4];
-    if (HAL_I2C_Master_Receive(BNO08x_HANDLE, BNO08x_I2CADDR_DEFAULT<<1, header, 4, 100) != HAL_OK) {
+    if (HAL_I2C_Master_Receive(BNO08x_HANDLE, BNO08x_I2CADDR_DEFAULT<<1, header, 4, 10) != HAL_OK) {
         return 0;
     }
 
@@ -277,7 +277,7 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
         // Serial.print("Reading from I2C: "); Serial.println(read_size);
         // Serial.print("Remaining to read: "); Serial.println(cargo_remaining);
 
-        if (HAL_I2C_Master_Receive(BNO08x_HANDLE, BNO08x_I2CADDR_DEFAULT<<1, i2c_buffer, read_size, 100) != HAL_OK) {
+        if (HAL_I2C_Master_Receive(BNO08x_HANDLE, BNO08x_I2CADDR_DEFAULT<<1, i2c_buffer, read_size, 10) != HAL_OK) {
         	return 0;
         }
 
@@ -324,7 +324,7 @@ static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len)
     */
 
     uint16_t write_size = std::min(i2c_buffer_max, len);
-    if (HAL_I2C_Master_Transmit(BNO08x_HANDLE, BNO08x_I2CADDR_DEFAULT<<1, pBuffer, write_size, 100) != HAL_OK) {
+    if (HAL_I2C_Master_Transmit(BNO08x_HANDLE, BNO08x_I2CADDR_DEFAULT<<1, pBuffer, write_size, 10) != HAL_OK) {
         return 0;
     }
 

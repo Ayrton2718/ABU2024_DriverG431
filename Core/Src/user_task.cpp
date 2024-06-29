@@ -10,7 +10,9 @@ extern "C" {
 typedef struct{
 	int16_t gyro;
 	int16_t angle;
-	int16_t spin_count;
+	int8_t spin_count;
+	int8_t acc_angle;
+    uint16_t acc;
 }__attribute__((__packed__)) yaw_t;
 
 }
@@ -19,32 +21,48 @@ static Adafruit_BNO08x  g_bno08x;
 
 static yaw_t  g_yaw_reg;
 
-// static sh2_SensorValue_t sensorValue;
-
 static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size_t len);
 static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
-static inline void quaternionToEulerGI(const sh2_GyroIntegratedRV_t* rotational_vector, yaw_t* rpy);
-
-static void set_sensor_reports(void);
+static inline void sensorToYaw(const sh2_GyroIntegratedRV_t* sensor, yaw_t* rpy);
+static inline void sensorToAcc(const sh2_Accelerometer_t* sensor, yaw_t* rpy);
 
 static bool g_rst_flg;
 static CSTimer_t g_tim;
 
+static uint32_t g_count1 = 0;
+static uint32_t g_count2 = 0;
+static uint32_t g_us = 0;
+
 void UserTask_setup(void)
 {
+    HAL_Delay(100);
+
     g_yaw_reg.gyro = 0;
     g_yaw_reg.angle = 0;
     g_yaw_reg.spin_count = 0;
+    g_yaw_reg.acc_angle = 0;
+    g_yaw_reg.acc = 0;
 
     // Try to initialize!
-    if (!g_bno08x.begin_I2C()) {
+    while (g_bno08x.begin_I2C() == false) {
+        CSLed_err();
+        NVIC_SystemReset();
+    }
+    HAL_Delay(10);
+
+    while(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == false){
         CSLed_err();
         HAL_Delay(10);
     }
+    HAL_Delay(10);
 
-    set_sensor_reports();
+    while(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == false){
+        CSLed_err();
+        HAL_Delay(10);
+    }
+    HAL_Delay(10);
 
     g_rst_flg = false;
     
@@ -59,18 +77,43 @@ void UserTask_loop(void)
     if(5000 < us)
     {
         CSTimer_start(&g_tim);
+        g_us = us;
 
-        sh2_SensorValue_t sensorValue;
-        if (g_bno08x.getSensorEvent(&sensorValue)) {
-            quaternionToEulerGI(&sensorValue.un.gyroIntegratedRV, &g_yaw_reg);
-        }else{
-            CSLed_err();
+        bool is_success[2] = {false, false};
+        for(size_t i = 0; i < 2; i++){
+            sh2_SensorValue_t sensorValue;
+            if(g_bno08x.getSensorEvent(&sensorValue)){
+                switch (sensorValue.sensorId) {
+                    case SH2_GYRO_INTEGRATED_RV:
+                        sensorToYaw(&sensorValue.un.gyroIntegratedRV, &g_yaw_reg);
+                        is_success[0] = true;
+                        break;
+                    case SH2_LINEAR_ACCELERATION:
+                        sensorToAcc(&sensorValue.un.linearAcceleration, &g_yaw_reg);
+                        is_success[1] = true;
+                        break;
+                    default:
+                        CSLed_err();
+                        break;
+                }
+            }
+            CSTimer_delayUs(100);
         }
 
-        if (g_bno08x.wasReset()) {
-            set_sensor_reports();
+        if((is_success[0]) == false){
             CSLed_err();
+            g_count1++;
         }
+
+        if((is_success[1]) == false){
+			CSLed_err();
+			g_count2++;
+		}
+
+//        if (g_bno08x.wasReset()) {
+//            set_sensor_reports();
+//            CSLed_err();
+//        }
 
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
     }
@@ -100,28 +143,21 @@ static void UserTask_resetCallback(void)
 	g_rst_flg = 1;
 }
 
-static void set_sensor_reports(void){
-    if (!g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 2000)){
-        CSLed_err();
-    }
-}
-
-static inline void quaternionToEulerGI(const sh2_GyroIntegratedRV_t* rotational_vector, yaw_t* rpy){
-    float qr = rotational_vector->real;
-    float qi = rotational_vector->i;
-    float qj = rotational_vector->j;
-    float qk = rotational_vector->k;
+static inline void sensorToYaw(const sh2_GyroIntegratedRV_t* sensor, yaw_t* rpy)
+{
+    float qr = sensor->real;
+    float qi = sensor->i;
+    float qj = sensor->j;
+    float qk = sensor->k;
 
     float sqr = qr * qr;
     float sqi = qi * qi;
     float sqj = qj * qj;
     float sqk = qk * qk;
 
-    // rpy->roll = atan2(2.0 * (qj * qk + qi * qr), (-sqi - sqj + sqk + sqr));
-    // rpy->pitch = asin(-2.0 * (qi * qk - qj * qr) / (sqi + sqj + sqk + sqr));
     float now_yaw_f = atan2f(2.0 * (qi * qj + qk * qr), (sqi - sqj - sqk + sqr));
 
-    int16_t now_yaw = now_yaw_f * (180 / M_PI * 100);
+    int16_t now_yaw = static_cast<int16_t>(now_yaw_f * (180 / M_PI * 100));
     if((100 * 100) < rpy->angle && now_yaw < (-100 * 100))
     {
         rpy->spin_count++;
@@ -129,6 +165,12 @@ static inline void quaternionToEulerGI(const sh2_GyroIntegratedRV_t* rotational_
         rpy->spin_count--;
     }
 
-    rpy->gyro = rotational_vector->angVelZ * (180 / M_PI * 100);
+    rpy->gyro = sensor->angVelZ * (180 / M_PI * 100);
     rpy->angle = now_yaw;
+}
+
+static inline void sensorToAcc(const sh2_Accelerometer_t* sensor, yaw_t* rpy)
+{
+	rpy->acc_angle = static_cast<int8_t>(atan2f(sensor->y, sensor->x) * (127 / M_PI));
+	rpy->acc = static_cast<int16_t>(sqrtf(sensor->x*sensor->x + sensor->y*sensor->y) * 100);
 }
