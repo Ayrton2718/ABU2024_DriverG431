@@ -91,7 +91,7 @@ void UserTask_loop(void)
             count_t reg;
             reg.angle = g_count_reg.angle;
             reg.rot_count = g_count_reg.rot_count;
-            reg.checksum = calc_checksum(reg);
+            reg.checksum = g_count_reg.checksum;
             CSIo_sendUser(CSReg_0, (const uint8_t*)&reg, sizeof(count_t));
         }else{
             CSLed_err();
@@ -157,6 +157,11 @@ static inline bool receive(uint8_t high_byte, uint8_t low_byte)
     if(abs(diff_angle) < 1000){
         g_count_reg.rot_count = now_rot;
         g_count_reg.angle = now_angle;
+
+        count_t reg;
+        reg.angle = now_angle;
+        reg.rot_count = now_rot;
+        g_count_reg.checksum = calc_checksum(reg);
         CSTimer_start(&g_timeout);
         return true;
     }else{
