@@ -50,7 +50,7 @@ void MX_USART2_UART_Init(void)
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
   huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
+  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 5, 5) != HAL_OK)
   {
     Error_Handler();
   }

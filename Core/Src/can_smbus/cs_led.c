@@ -41,14 +41,14 @@ void CSLed_init(void)
 
 void CSLed_tx(void)
 {
-    HAL_GPIO_TogglePin(LED_TX_GPIO_Port, LED_TX_Pin);
+    // HAL_GPIO_TogglePin(LED_TX_GPIO_Port, LED_TX_Pin);
     g_txStopCount = 1;
 }
 
 
 void CSLed_rx(void)
 {
-    HAL_GPIO_TogglePin(LED_RX_GPIO_Port, LED_RX_Pin);
+    // HAL_GPIO_TogglePin(LED_RX_GPIO_Port, LED_RX_Pin);
     g_rxStopCount = 1;
 }
 
@@ -91,6 +91,7 @@ void CSLed_process(CSType_bool_t is_safety_on)
         {
             HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
         }else{
+            HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_SET);
             g_txStopCount--;
         }
 
@@ -98,6 +99,7 @@ void CSLed_process(CSType_bool_t is_safety_on)
         {
             HAL_GPIO_WritePin(LED_RX_GPIO_Port, LED_RX_Pin, GPIO_PIN_RESET);
         }else{
+            HAL_GPIO_WritePin(LED_RX_GPIO_Port, LED_RX_Pin, GPIO_PIN_SET);
             g_rxStopCount--;
         }
 

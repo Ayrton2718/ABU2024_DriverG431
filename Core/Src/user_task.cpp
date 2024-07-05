@@ -36,6 +36,7 @@ static uint8_t  g_id;
 static CSTimer_t g_tim;
 static CSTimer_t g_send_tim;
 static CSTimer_t g_timeout;
+static uint32_t g_interval_ms;
 
 static uint8_t g_rx_buff[2];
 
@@ -86,7 +87,8 @@ void UserTask_loop(void)
     {
         CSTimer_start(&g_send_tim);
 
-        if(CSTimer_getMs(g_timeout) < 100)
+        g_interval_ms = CSTimer_getMs(g_timeout);
+        if(g_interval_ms < 100)
         {
             count_t reg;
             reg.angle = g_count_reg.angle;
@@ -199,5 +201,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 return;
             }
         }
+        
+        CSLed_err();
 	}
 }
