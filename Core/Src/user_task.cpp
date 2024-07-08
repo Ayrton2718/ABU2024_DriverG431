@@ -46,21 +46,47 @@ void UserTask_setup(void)
     g_yaw_reg.acc = 0;
 
     // Try to initialize!
-    while (g_bno08x.begin_I2C() == false) {
-        CSLed_err();
-        NVIC_SystemReset();
-    }
-    HAL_Delay(10);
+    bool is_success;
 
-    while(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == false){
+    is_success = false;
+    for (size_t i = 0; i < 20; i++) {
+    	if(g_bno08x.begin_I2C() == true){
+    		is_success = true;
+    		break;
+    	}
         CSLed_err();
         HAL_Delay(10);
     }
+    if(is_success == false){
+    	NVIC_SystemReset();
+    }
     HAL_Delay(10);
 
-    while(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == false){
+    is_success = false;
+    for (size_t i = 0; i < 20; i++) {
+    	if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
+    		is_success = true;
+    		break;
+    	}
         CSLed_err();
         HAL_Delay(10);
+    }
+    if(is_success == false){
+    	NVIC_SystemReset();
+    }
+    HAL_Delay(10);
+
+    is_success = false;
+    for (size_t i = 0; i < 20; i++) {
+    	if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
+    		is_success = true;
+    		break;
+    	}
+        CSLed_err();
+        HAL_Delay(10);
+    }
+    if(is_success == false){
+    	NVIC_SystemReset();
     }
     HAL_Delay(10);
 
