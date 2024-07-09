@@ -21,7 +21,7 @@ typedef struct{
     uint8_t start : 1;
     uint8_t boot : 1;
     uint8_t kill : 1;
-    uint8_t strategy : 1;
+    uint8_t mec_test : 1;
     uint8_t reserved : 1;
     uint8_t checksum : 8;
 }__attribute__((__packed__)) CSPanel_s2m_t;
@@ -33,7 +33,7 @@ typedef struct{
     uint8_t is_red_zone     : 1;
     uint8_t is_blue_zone    : 1;
     uint8_t retry   		: 1;
-    uint8_t strategy 		: 1;
+    uint8_t mec_test 		: 1;
     uint8_t io_err          : 1;
     uint8_t checksum 		: 8;
 }__attribute__((__packed__)) CSPanel_m2s_t;

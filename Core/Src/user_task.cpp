@@ -42,7 +42,7 @@ void UserTask_loop(void)
         g_s2m.start = !HAL_GPIO_ReadPin(SW_START_GPIO_Port, SW_START_Pin);
         g_s2m.boot = HAL_GPIO_ReadPin(SW_BOOT_GPIO_Port, SW_BOOT_Pin);
         g_s2m.kill = HAL_GPIO_ReadPin(SW_KILL_GPIO_Port, SW_KILL_Pin);
-        g_s2m.strategy = HAL_GPIO_ReadPin(SW_STRATEGY_GPIO_Port, SW_STRATEGY_Pin);
+        g_s2m.mec_test = HAL_GPIO_ReadPin(SW_STRATEGY_GPIO_Port, SW_STRATEGY_Pin);
 
         uint8_t* buff = (uint8_t*)&g_s2m;
         buff[1] = buff[0]; 
@@ -54,7 +54,7 @@ void UserTask_loop(void)
         HAL_GPIO_WritePin(LED_RED_ZONE_GPIO_Port, LED_RED_ZONE_Pin, (GPIO_PinState)g_m2s.is_red_zone);
         HAL_GPIO_WritePin(LED_BLUE_ZONE_GPIO_Port, LED_BLUE_ZONE_Pin, (GPIO_PinState)g_m2s.is_blue_zone);
         HAL_GPIO_WritePin(LED_RETRY_GPIO_Port, LED_RETRY_Pin, (GPIO_PinState)g_m2s.retry);
-        HAL_GPIO_WritePin(LED_STRATEGY_GPIO_Port, LED_STRATEGY_Pin, (GPIO_PinState)g_m2s.strategy);
+        HAL_GPIO_WritePin(LED_STRATEGY_GPIO_Port, LED_STRATEGY_Pin, (GPIO_PinState)g_m2s.mec_test);
         
 		if (g_m2s.io_err) {
 			__HAL_TIM_SET_COMPARE(BUZZER_HANDLE, BUZZER_CHANNEL, 100);
