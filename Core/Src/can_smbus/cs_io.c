@@ -23,7 +23,6 @@ static uint8_t         g_send_wp;
 static volatile uint8_t         g_send_rp;
 static volatile uint8_t         g_send_count;
 static CSIo_packet_t   g_send_buffer[CS_IO_SEND_BUFFER];
-static volatile uint8_t    g_bus_err_count;
 
 static uint16_t   g_my_id;
 static CSType_appid_t g_appid;
@@ -75,7 +74,6 @@ void CSIo_init(void)
     g_send_rp = 0;
     g_send_count = 0;
     memset(g_send_buffer, 0x00, sizeof(g_send_buffer));
-    g_bus_err_count = 0;
 }
 
 
@@ -114,7 +112,6 @@ static void CSIo_send(uint16_t reg, const uint8_t* data, uint8_t len)
             CSLed_tx();
         }else{
             CSLed_busErr();
-            g_bus_err_count++;
         }
     }else{
 		if(g_send_count == CS_IO_SEND_BUFFER)
@@ -146,16 +143,9 @@ void CSIo_process(void)
             CSLed_tx();
         }else{
             CSLed_busErr();
-            g_bus_err_count++;
         }
         g_send_rp++;
         g_send_count--;
-    }
-
-    if(20 < g_bus_err_count){
-        uint32_t error_flags = HAL_FDCAN_GetError(CSIO_HCAN);
-        __HAL_FDCAN_CLEAR_FLAG(CSIO_HCAN, error_flags);
-        g_bus_err_count = 0;
     }
 }
 
@@ -228,7 +218,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
             }
         }else{
             CSLed_busErr();
-            g_bus_err_count++;
         }
     }
 }
@@ -284,7 +273,6 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
         else
         {
             CSLed_busErr();
-            g_bus_err_count++;
         }
     }
 }
