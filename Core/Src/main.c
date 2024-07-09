@@ -118,6 +118,7 @@ int main(void)
 
     CSLed_process(is_safety_on);
     CSId_process(is_safety_on);
+    CSIo_process();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
