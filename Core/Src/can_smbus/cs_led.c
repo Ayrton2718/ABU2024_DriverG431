@@ -41,14 +41,12 @@ void CSLed_init(void)
 
 void CSLed_tx(void)
 {
-    // HAL_GPIO_TogglePin(LED_TX_GPIO_Port, LED_TX_Pin);
     g_txStopCount = 1;
 }
 
 
 void CSLed_rx(void)
 {
-    // HAL_GPIO_TogglePin(LED_RX_GPIO_Port, LED_RX_Pin);
     g_rxStopCount = 1;
 }
 
