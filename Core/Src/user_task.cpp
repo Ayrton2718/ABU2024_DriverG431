@@ -2,6 +2,7 @@
 #include "can_smbus/can_smbus.hpp"
 
 #include "usart.h"
+#include "math.h"
 
 /*
 R6093U
@@ -16,24 +17,14 @@ https://ip.festo-didactic.com/Infoportal/Robotino/document/gyro.pdf
 
 extern "C" {
 
-typedef struct{
-    int16_t roll;   // 1/100 [degree]
-    int16_t pitch;  // 1/100 [degree]
-    int16_t yaw;    // 1/100 [degree]
-    int16_t spin_yaw;
-}__attribute__((__packed__)) angle_t;
-
-typedef struct{
-    int16_t roll;   // 1/100 [degree]
-    int16_t pitch;  // 1/100 [degree]
-    int16_t yaw;    // 1/100 [degree]
-}__attribute__((__packed__)) gyro_t;
-
-typedef struct{
-    int16_t x;      // 1/1000 [g]
-    int16_t y;      // 1/1000 [g]
-    int16_t z;      // 1/1000 [g]
-}__attribute__((__packed__)) acc_t;
+/// @brief gyro：角速度、angle：角度（振り切れる）、spin_count：回転数
+    typedef struct{
+        int16_t gyro;
+        int16_t angle;
+        int8_t spin_count;
+        int8_t acc_angle;
+        uint16_t acc;
+    }__attribute__((__packed__)) yaw_t;
 
 }
 
@@ -41,9 +32,7 @@ static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size
 static void UserTask_resetCallback(void);
 static void UserTask_timerCallback(void);
 
-static angle_t  g_angle_reg;
-static gyro_t   g_gyro_reg;
-static acc_t    g_acc_reg;
+static yaw_t  g_yaw_reg;
 
 static int16_t  g_befor_angle;
 
@@ -65,18 +54,11 @@ void UserTask_setup(void)
 {
     g_rst_flg = false;
 
-    g_angle_reg.roll = 0;
-    g_angle_reg.pitch = 0;
-    g_angle_reg.yaw = 0;
-    g_angle_reg.spin_yaw = 0;
-
-    g_gyro_reg.roll = 0;
-    g_gyro_reg.pitch = 0;
-    g_gyro_reg.yaw = 0;
-
-    g_acc_reg.x = 0;
-    g_acc_reg.y = 0;
-    g_acc_reg.z = 0;
+    g_yaw_reg.gyro = 0;    
+    g_yaw_reg.angle = 0;
+    g_yaw_reg.spin_count = 0;
+    g_yaw_reg.acc_angle = 0;
+    g_yaw_reg.acc = 0;
 
     g_befor_angle = 0;
 
@@ -114,52 +96,35 @@ void UserTask_loop(void)
     if((1000 < CSTimer_getUs(g_tim)) && g_is_connecting)
     {
         uint8_t data_flg = (g_data_flg + 1) % 2;
-        g_angle_reg.roll = g_data[data_flg][4] << 8 | g_data[data_flg][3];
-        g_angle_reg.pitch = (g_data[data_flg][6] << 8 | g_data[data_flg][5]);
-        g_angle_reg.yaw = (g_data[data_flg][8] << 8 | g_data[data_flg][7]);
-        g_gyro_reg.roll = (g_data[data_flg][10] << 8 | g_data[data_flg][9]);
-        g_gyro_reg.pitch = (g_data[data_flg][12] << 8 | g_data[data_flg][11]);
-        g_gyro_reg.yaw = (g_data[data_flg][14] << 8 | g_data[data_flg][13]);
-        g_acc_reg.x = g_data[data_flg][16] << 8 | g_data[data_flg][15];
-        g_acc_reg.y = g_data[data_flg][18] << 8 | g_data[data_flg][17];
-        g_acc_reg.z = g_data[data_flg][20] << 8 | g_data[data_flg][19];
+        g_yaw_reg.gyro = (g_data[data_flg][10] << 8 | g_data[data_flg][9]) * -1;
+        g_yaw_reg.angle = ((g_data[data_flg][8] << 8 | g_data[data_flg][7])) * -1;
+        float acc_x = (float)(g_data[data_flg][16] << 8 | g_data[data_flg][15]) / 1000.0f;
+        float acc_y= (float)(g_data[data_flg][18] << 8 | g_data[data_flg][17]) / 1000.0f;
+        g_yaw_reg.acc_angle = static_cast<int8_t>(atan2f(acc_y, acc_x) * (127 / M_PI));
+        g_yaw_reg.acc = static_cast<int16_t>(sqrtf(acc_x*acc_x + acc_y*acc_y) * 100);
 
-        if((100 * 100) < g_befor_angle && g_angle_reg.yaw < (-100 * 100))
+        if((100 * 100) < g_befor_angle && g_yaw_reg.angle < (-100 * 100))
         {
-            g_angle_reg.spin_yaw++;
-        }else if(g_befor_angle < (-100 * 100) && (100 * 100) < g_angle_reg.yaw){
-            g_angle_reg.spin_yaw--;
+            g_yaw_reg.spin_count++;
+        }else if(g_befor_angle < (-100 * 100) && (100 * 100) < g_yaw_reg.angle){
+            g_yaw_reg.spin_count--;
         }
-        g_befor_angle = g_angle_reg.yaw;
+        g_befor_angle = g_yaw_reg.angle;
 
 #ifdef ENABLE_ANGLE_OUT
-        CSIo_sendUser(CSReg_0, (const uint8_t*)&g_angle_reg, sizeof(angle_t));
+        CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
 #endif /*ENABLE_ANGLE_OUT*/
 
-#ifdef ENABLE_GYRO_OUT
-        CSIo_sendUser(CSReg_1, (const uint8_t*)&g_gyro_reg, sizeof(gyro_t));
-#endif /*ENABLE_GYRO_OUT*/
-
-#ifdef ENABLE_ACC_OUT
-        CSIo_sendUser(CSReg_2, (const uint8_t*)&g_acc_reg, sizeof(acc_t));
-#endif /*ENABLE_ACC_OUT*/
         CSTimer_start(&g_tim);
     }
 
     if(g_rst_flg)
     {
-        g_angle_reg.roll = 0;
-        g_angle_reg.pitch = 0;
-        g_angle_reg.yaw = 0;
-        g_angle_reg.spin_yaw = 0;
-
-        g_gyro_reg.roll = 0;
-        g_gyro_reg.pitch = 0;
-        g_gyro_reg.yaw = 0;
-
-        g_acc_reg.x = 0;
-        g_acc_reg.y = 0;
-        g_acc_reg.z = 0;
+        g_yaw_reg.gyro = 0;    
+        g_yaw_reg.angle = 0;
+        g_yaw_reg.spin_count = 0;
+        g_yaw_reg.acc_angle = 0;
+        g_yaw_reg.acc = 0;
 
         g_befor_angle = 0;
 
