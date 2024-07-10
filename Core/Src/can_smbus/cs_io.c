@@ -64,6 +64,11 @@ void CSIo_init(void)
         Error_Handler();
     }
 
+    if (HAL_FDCAN_ActivateNotification(CSIO_HCAN, FDCAN_IT_BUS_OFF, 0) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
     g_appid = CSType_appid_UNKNOWN;
     g_can_callback = CSIo_dummyCallback;
     g_reset_callback = CSIo_dummyResetCallback;
@@ -291,4 +296,17 @@ static void CSIo_setFilterMask(uint32_t index, uint32_t fifo_id, uint16_t id1, u
     if (HAL_FDCAN_ConfigFilter(CSIO_HCAN, &filter) != HAL_OK){
         Error_Handler();
     }
+}
+
+// BUS-OFF割り込みハンドラ
+void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t ErrorStatusITs) {
+	if (hfdcan->Instance == CSIO_HCAN->Instance) {
+		if ((ErrorStatusITs & FDCAN_IT_BUS_OFF) != RESET) {
+            FDCAN_ProtocolStatusTypeDef protocolStatus = {};
+            HAL_FDCAN_GetProtocolStatus(hfdcan, &protocolStatus);
+            if (protocolStatus.BusOff) {
+                CLEAR_BIT(hfdcan->Instance->CCCR, FDCAN_CCCR_INIT);
+            }
+		}
+	}
 }
