@@ -96,7 +96,7 @@ void UserTask_loop(void)
     if((1000 < CSTimer_getUs(g_tim)) && g_is_connecting)
     {
         uint8_t data_flg = (g_data_flg + 1) % 2;
-        g_yaw_reg.gyro = (g_data[data_flg][10] << 8 | g_data[data_flg][9]) * -1;
+        g_yaw_reg.gyro = (g_data[data_flg][14] << 8 | g_data[data_flg][13]) * -1;
         g_yaw_reg.angle = ((g_data[data_flg][8] << 8 | g_data[data_flg][7])) * -1;
         float acc_x = (float)(g_data[data_flg][16] << 8 | g_data[data_flg][15]) / 1000.0f;
         float acc_y= (float)(g_data[data_flg][18] << 8 | g_data[data_flg][17]) / 1000.0f;
