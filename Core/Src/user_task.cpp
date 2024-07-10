@@ -95,8 +95,6 @@ void UserTask_loop(void)
             reg.rot_count = g_count_reg.rot_count;
             reg.checksum = g_count_reg.checksum;
             CSIo_sendUser(CSReg_0, (const uint8_t*)&reg, sizeof(count_t));
-        }else{
-            CSLed_err();
         }
     }
 
@@ -201,7 +199,5 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 return;
             }
         }
-        
-        CSLed_err();
 	}
 }
