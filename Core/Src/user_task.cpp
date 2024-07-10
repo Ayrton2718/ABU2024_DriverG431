@@ -127,12 +127,10 @@ void UserTask_loop(void)
         }
 
         if((is_success[0]) == false){
-            CSLed_err();
             g_count1++;
         }
 
         if((is_success[1]) == false){
-			CSLed_err();
 			g_count2++;
 		}
 
@@ -142,6 +140,16 @@ void UserTask_loop(void)
 //        }
 
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
+
+        if(100 < g_count1){
+            CSLed_err();
+            g_count1 = 0;
+        }
+
+        if(100 < g_count2){
+            CSLed_err();
+            g_count2 = 0;
+        }
     }
 
     if(g_rst_flg)
