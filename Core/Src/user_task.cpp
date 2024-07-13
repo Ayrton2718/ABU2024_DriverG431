@@ -134,13 +134,26 @@ void UserTask_loop(void)
 			g_count2++;
 		}
 
-//        if (g_bno08x.wasReset()) {
-//            set_sensor_reports();
-//            CSLed_err();
-//        }
-
         CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
 
+        if(g_bno08x.wasReset()) {
+            for(size_t i = 0; i < 4; i++) {
+                if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
+                    break;
+                }
+                CSLed_err();
+                CSTimer_delayUs(100);
+            }
+
+            for(size_t i = 0; i < 4; i++) {
+                if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
+                    break;
+                }
+                CSLed_err();
+                CSTimer_delayUs(100);
+            }
+        }
+        
         if(100 < g_count1){
             CSLed_err();
             g_count1 = 0;
