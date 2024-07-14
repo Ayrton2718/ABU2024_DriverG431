@@ -52,6 +52,8 @@ void UserTask_setup(void)
 
     g_rst_flg = false;
 
+    g_rx_buff[0] = 0;
+    g_rx_buff[1] = 0;
     HAL_UART_Receive_DMA(RS485_HUART, g_rx_buff, sizeof(g_rx_buff));
 
     CSTimer_start(&g_tim);
@@ -76,11 +78,6 @@ void UserTask_loop(void)
         {
             CSLed_err();
         }
-
-        if(10 < CSTimer_getMs(g_timeout))
-        {
-            CSLed_err();
-        }
     }
 
     if(1 < CSTimer_getMs(g_send_tim))
@@ -88,7 +85,7 @@ void UserTask_loop(void)
         CSTimer_start(&g_send_tim);
 
         g_interval_ms = CSTimer_getMs(g_timeout);
-        if(g_interval_ms < 100)
+        if(g_interval_ms < 20)
         {
             count_t reg;
             reg.angle = g_count_reg.angle;
@@ -96,6 +93,22 @@ void UserTask_loop(void)
             reg.checksum = g_count_reg.checksum;
             CSIo_sendUser(CSReg_0, (const uint8_t*)&reg, sizeof(count_t));
         }
+
+        if(10 < CSTimer_getMs(g_timeout))
+		{
+			HAL_UART_DMAStop(RS485_HUART);
+			HAL_UART_Abort(RS485_HUART);  // UARTの送受信を停止
+			HAL_UART_DeInit(RS485_HUART); // UARTの設定をリセット
+
+			CSTimer_delayUs(100);
+
+			g_rx_buff[0] = 0;
+			g_rx_buff[1] = 0;
+			MX_USART2_UART_Init();  // UARTの再初期化
+			HAL_UART_Receive_DMA(RS485_HUART, g_rx_buff, sizeof(g_rx_buff));
+
+			CSLed_err();
+		}
     }
 
     if(g_rst_flg)
