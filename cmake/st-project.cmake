@@ -92,6 +92,7 @@ target_sources(
     "Core/Src/can_smbus/cs_led.c"
     "Core/Src/can_smbus/cs_timer.c"
     "Core/Src/can_smbus/cs_type.c"
+    "Core/Src/dma.c"
     "Core/Src/fdcan.c"
     "Core/Src/gpio.c"
     "Core/Src/main.c"
