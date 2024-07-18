@@ -30,6 +30,7 @@ static inline void sensorToAcc(const sh2_Accelerometer_t* sensor, yaw_t* rpy);
 
 static bool g_rst_flg;
 static CSTimer_t g_tim;
+static CSTimer_t g_timeout_tim;
 
 static uint32_t g_count1 = 0;
 static uint32_t g_count2 = 0;
@@ -50,49 +51,50 @@ void UserTask_setup(void)
 
     is_success = false;
     for (size_t i = 0; i < 20; i++) {
-    	if(g_bno08x.begin_I2C() == true){
-    		is_success = true;
-    		break;
-    	}
+        if(g_bno08x.begin_I2C() == true){
+            is_success = true;
+            break;
+        }
         CSLed_err();
         HAL_Delay(10);
     }
     if(is_success == false){
-    	NVIC_SystemReset();
+        NVIC_SystemReset();
     }
     HAL_Delay(10);
 
     is_success = false;
     for (size_t i = 0; i < 20; i++) {
-    	if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
-    		is_success = true;
-    		break;
-    	}
+        if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
+            is_success = true;
+            break;
+        }
         CSLed_err();
         HAL_Delay(10);
     }
     if(is_success == false){
-    	NVIC_SystemReset();
+        NVIC_SystemReset();
     }
     HAL_Delay(10);
 
     is_success = false;
     for (size_t i = 0; i < 20; i++) {
-    	if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
-    		is_success = true;
-    		break;
-    	}
+        if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
+            is_success = true;
+            break;
+        }
         CSLed_err();
         HAL_Delay(10);
     }
     if(is_success == false){
-    	NVIC_SystemReset();
+        NVIC_SystemReset();
     }
     HAL_Delay(10);
 
     g_rst_flg = false;
     
     CSTimer_start(&g_tim);
+    CSTimer_start(&g_timeout_tim);
     CSIo_bind(CSType_appid_UNKNOWN, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
 }
@@ -113,6 +115,7 @@ void UserTask_loop(void)
                     case SH2_GYRO_INTEGRATED_RV:
                         sensorToYaw(&sensorValue.un.gyroIntegratedRV, &g_yaw_reg);
                         is_success[0] = true;
+                        CSTimer_start(&g_timeout_tim);
                         break;
                     case SH2_LINEAR_ACCELERATION:
                         sensorToAcc(&sensorValue.un.linearAcceleration, &g_yaw_reg);
@@ -134,7 +137,12 @@ void UserTask_loop(void)
 			g_count2++;
 		}
 
-        CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
+        uint32_t ms = CSTimer_getMs(g_timeout_tim);
+        if(ms < 100)
+        {
+            CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
+            CSLed_err();
+        }
 
         if(g_bno08x.wasReset()) {
             for(size_t i = 0; i < 4; i++) {
