@@ -30,11 +30,11 @@ static inline void sensorToAcc(const sh2_Accelerometer_t* sensor, yaw_t* rpy);
 
 static bool g_rst_flg;
 static CSTimer_t g_tim;
-static CSTimer_t g_timeout_tim;
+static CSTimer_t g_rv_tim;
+static CSTimer_t g_la_tim;
 
-static uint32_t g_count1 = 0;
-static uint32_t g_count2 = 0;
-static uint32_t g_us = 0;
+static uint32_t g_rv_ms = 0;
+static uint32_t g_la_ms = 0;
 
 void UserTask_setup(void)
 {
@@ -56,21 +56,7 @@ void UserTask_setup(void)
             break;
         }
         CSLed_err();
-        HAL_Delay(10);
-    }
-    if(is_success == false){
-        NVIC_SystemReset();
-    }
-    HAL_Delay(10);
-
-    is_success = false;
-    for (size_t i = 0; i < 20; i++) {
-        if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
-            is_success = true;
-            break;
-        }
-        CSLed_err();
-        HAL_Delay(10);
+        HAL_Delay(1);
     }
     if(is_success == false){
         NVIC_SystemReset();
@@ -84,17 +70,33 @@ void UserTask_setup(void)
             break;
         }
         CSLed_err();
-        HAL_Delay(10);
+        CSTimer_delayUs(10);
     }
     if(is_success == false){
         NVIC_SystemReset();
     }
+    CSTimer_delayUs(100);
+
+    is_success = false;
+    for (size_t i = 0; i < 20; i++) {
+        if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
+            is_success = true;
+            break;
+        }
+        CSLed_err();
+        CSTimer_delayUs(10);
+    }
+    if(is_success == false){
+        NVIC_SystemReset();
+    }
+
     HAL_Delay(10);
 
     g_rst_flg = false;
     
     CSTimer_start(&g_tim);
-    CSTimer_start(&g_timeout_tim);
+    CSTimer_start(&g_rv_tim);
+    CSTimer_start(&g_la_tim);
     CSIo_bind(CSType_appid_UNKNOWN, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
 }
@@ -102,75 +104,54 @@ void UserTask_setup(void)
 void UserTask_loop(void)
 {
     uint32_t us = CSTimer_getUs(g_tim);
-    if(5000 < us)
+    if(5100 < us)
     {
         CSTimer_start(&g_tim);
-        g_us = us;
 
-        bool is_success[2] = {false, false};
         for(size_t i = 0; i < 2; i++){
             sh2_SensorValue_t sensorValue;
             if(g_bno08x.getSensorEvent(&sensorValue)){
                 switch (sensorValue.sensorId) {
                     case SH2_GYRO_INTEGRATED_RV:
                         sensorToYaw(&sensorValue.un.gyroIntegratedRV, &g_yaw_reg);
-                        is_success[0] = true;
-                        CSTimer_start(&g_timeout_tim);
+                        CSTimer_start(&g_rv_tim);
                         break;
                     case SH2_LINEAR_ACCELERATION:
                         sensorToAcc(&sensorValue.un.linearAcceleration, &g_yaw_reg);
-                        is_success[1] = true;
+                        CSTimer_start(&g_la_tim);
                         break;
                     default:
                         CSLed_err();
                         break;
                 }
             }
-            CSTimer_delayUs(100);
+            CSTimer_delayUs(10);
         }
 
-        if((is_success[0]) == false){
-            g_count1++;
-        }
+        g_rv_ms = CSTimer_getMs(g_rv_tim);
+        g_la_ms = CSTimer_getMs(g_la_tim);
 
-        if((is_success[1]) == false){
-			g_count2++;
-		}
-
-        uint32_t ms = CSTimer_getMs(g_timeout_tim);
-        if(ms < 100)
+        if(g_rv_ms < 100)
         {
             CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
-            CSLed_err();
+        }else{
+        	CSLed_err();
         }
 
-        if(g_bno08x.wasReset()) {
-            for(size_t i = 0; i < 4; i++) {
-                if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
-                    break;
-                }
-                CSLed_err();
-                CSTimer_delayUs(100);
-            }
-
-            for(size_t i = 0; i < 4; i++) {
-                if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
-                    break;
-                }
-                CSLed_err();
-                CSTimer_delayUs(100);
-            }
-        }
-        
-        if(100 < g_count1){
-            CSLed_err();
-            g_count1 = 0;
+        bool was_reset = g_bno08x.wasReset();
+        if(was_reset || 10 < g_rv_ms){
+            if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
+				CSLed_err();
+			}
+			CSTimer_delayUs(10);
         }
 
-        if(100 < g_count2){
-            CSLed_err();
-            g_count2 = 0;
-        }
+        if(was_reset || 10 < g_la_ms){
+			if(g_bno08x.enableReport(SH2_LINEAR_ACCELERATION, 5000) == true){
+				CSLed_err();
+			}
+			CSTimer_delayUs(10);
+		}
     }
 
     if(g_rst_flg)
