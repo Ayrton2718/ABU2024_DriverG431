@@ -29,7 +29,8 @@ static inline void sensorToYaw(const sh2_GyroIntegratedRV_t* sensor, yaw_t* rpy)
 static inline void sensorToAcc(const sh2_Accelerometer_t* sensor, yaw_t* rpy);
 
 static bool g_rst_flg;
-static CSTimer_t g_tim;
+static CSTimer_t g_report_tim;
+static CSTimer_t g_send_tim;
 static CSTimer_t g_rv_tim;
 static CSTimer_t g_la_tim;
 
@@ -94,7 +95,8 @@ void UserTask_setup(void)
 
     g_rst_flg = false;
     
-    CSTimer_start(&g_tim);
+    CSTimer_start(&g_report_tim);
+    CSTimer_start(&g_send_tim);
     CSTimer_start(&g_rv_tim);
     CSTimer_start(&g_la_tim);
     CSIo_bind(CSType_appid_UNKNOWN, UserTask_canCallback, UserTask_resetCallback);
@@ -103,10 +105,10 @@ void UserTask_setup(void)
 
 void UserTask_loop(void)
 {
-    uint32_t us = CSTimer_getUs(g_tim);
+    uint32_t us = CSTimer_getUs(g_report_tim);
     if(5100 < us)
     {
-        CSTimer_start(&g_tim);
+        CSTimer_start(&g_report_tim);
 
         for(size_t i = 0; i < 2; i++){
             sh2_SensorValue_t sensorValue;
@@ -131,13 +133,6 @@ void UserTask_loop(void)
         g_rv_ms = CSTimer_getMs(g_rv_tim);
         g_la_ms = CSTimer_getMs(g_la_tim);
 
-        if(g_rv_ms < 100)
-        {
-            CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
-        }else{
-        	CSLed_err();
-        }
-
         bool was_reset = g_bno08x.wasReset();
         if(was_reset || 10 < g_rv_ms){
             if(g_bno08x.enableReport(SH2_GYRO_INTEGRATED_RV, 5000) == true){
@@ -152,6 +147,17 @@ void UserTask_loop(void)
 			}
 			CSTimer_delayUs(10);
 		}
+    }
+
+    if(2 < CSTimer_getMs(g_send_tim))
+    {
+        CSTimer_start(&g_send_tim);
+        if(CSTimer_getMs(g_rv_tim) < 20)
+        {
+            CSIo_sendUser(CSReg_0, (const uint8_t*)&g_yaw_reg, sizeof(yaw_t));
+        }else{
+            CSLed_err();
+        }
     }
 
     if(g_rst_flg)
