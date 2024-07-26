@@ -78,13 +78,13 @@ void UserTask_unsafeLoop(void)
 
 		uint8_t bright;
 		if(cmd_ms < 250){
-			bright = 125 - static_cast<uint8_t>(cmd_ms * (125.0f / 250.0f));
+			bright = 255 - static_cast<uint8_t>(cmd_ms * (255.0f / 250.0f));
 		}else if(cmd_ms < 500){
 			cmd_ms -= 250;
-			bright = static_cast<uint8_t>(cmd_ms * (125.0f / 250.0f));
+			bright = static_cast<uint8_t>(cmd_ms * (255.0f / 250.0f));
 		}
 
-		rgb_t rgb = {0, bright, 0};
+		rgb_t rgb = {bright, bright, bright};
 		std::array<rgb_t, LED_N> red_arr;
 		std::fill(red_arr.begin(), red_arr.end(), rgb);
 		UserTask_runLED(&red_arr);
