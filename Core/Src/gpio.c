@@ -57,14 +57,14 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, LED_BLUE_ZONE_Pin|LED_RETRY_Pin|LED_TX_Pin|LED_RX_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = SW_24V_Pin;
+  GPIO_InitStruct.Pin = SW_START_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(SW_24V_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SW_START_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PAPin PAPin PAPin PAPin
                            PAPin */
-  GPIO_InitStruct.Pin = SW_START_Pin|SW_BOOT_Pin|SW_KILL_Pin|SW_STRATEGY_Pin
+  GPIO_InitStruct.Pin = SW_24V_Pin|SW_BOOT_Pin|SW_KILL_Pin|SW_STRATEGY_Pin
                           |SW_RETRY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;

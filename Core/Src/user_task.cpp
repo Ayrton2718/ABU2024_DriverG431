@@ -38,7 +38,7 @@ void UserTask_loop(void)
 
         g_s2m.red_zone = !HAL_GPIO_ReadPin(SW_ZONE_GPIO_Port, SW_ZONE_Pin);
         g_s2m.start_or_retry = HAL_GPIO_ReadPin(SW_RETRY_GPIO_Port, SW_RETRY_Pin);
-		g_s2m.power_24v = HAL_GPIO_ReadPin(SW_24V_GPIO_Port, SW_24V_Pin);
+		g_s2m.power_24v = !HAL_GPIO_ReadPin(SW_24V_GPIO_Port, SW_24V_Pin);
         g_s2m.start = !HAL_GPIO_ReadPin(SW_START_GPIO_Port, SW_START_Pin);
         g_s2m.boot = HAL_GPIO_ReadPin(SW_BOOT_GPIO_Port, SW_BOOT_Pin);
         g_s2m.kill = HAL_GPIO_ReadPin(SW_KILL_GPIO_Port, SW_KILL_Pin);
