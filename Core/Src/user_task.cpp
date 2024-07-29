@@ -43,11 +43,11 @@ static void UserTask_runLED(const std::array<rgb_t, LED1_N + LED2_N>* red_arr);
 static uint16_t g_dma_buff[(24*(LED1_N + LED2_N))+50];
 static volatile bool g_send_complete = true;
 
+static CSTimer_t g_cmd_tim[2];
 static led_tape_t g_rgb_reg[2];
 
 static bool g_rst_flg;
 static CSTimer_t g_out_tim;
-static CSTimer_t g_cmd_tim;
 
 void UserTask_setup(void)
 {
@@ -60,11 +60,12 @@ void UserTask_setup(void)
     g_rgb_reg[1].g = 255;
     g_rgb_reg[1].b = 255;
     g_rgb_reg[1].hz = 2 * 10;
+    CSTimer_start(&g_cmd_tim[0]);
+    CSTimer_start(&g_cmd_tim[1]);
 
     g_rst_flg = false;
 
     CSTimer_start(&g_out_tim);
-    CSTimer_start(&g_cmd_tim);
     CSIo_bind(CSType_appid_UNKNOWN, UserTask_canCallback, UserTask_resetCallback);
     CSTimer_bind(UserTask_timerCallback);
 }
@@ -81,10 +82,10 @@ void UserTask_loop(void)
         {
             float bright_rate;
             if(g_rgb_reg[i].hz != 0){
-                uint32_t current_ms = CSTimer_getMs(g_cmd_tim);
+                uint32_t current_ms = CSTimer_getMs(g_cmd_tim[i]);
                 uint32_t order_ms = 10000 / static_cast<uint32_t>(g_rgb_reg[i].hz);
                 if(order_ms < current_ms){
-                    CSTimer_start(&g_cmd_tim);
+                    CSTimer_start(&g_cmd_tim[i]);
                     current_ms = 0;
                 }
 
