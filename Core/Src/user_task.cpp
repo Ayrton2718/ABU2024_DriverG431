@@ -4,14 +4,14 @@
 
 #include <array>
 
-#define R1
-//#define R2
+//#define R1
+#define R2
 
-#ifdef R1
+#if defined(R1)
 #define LED1_N (6)
 #define LED2_N (6)
 #define LED_BRIGHT_RATE (0.5)
-#elif R2
+#elif defined(R2)
 #define LED1_N (7)
 #define LED2_N (0)
 #define LED_BRIGHT_RATE (1.0)
