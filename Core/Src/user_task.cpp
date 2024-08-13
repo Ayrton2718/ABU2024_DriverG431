@@ -98,8 +98,10 @@ void UserTask_loop(void)
         uint8_t data_flg = (g_data_flg + 1) % 2;
         g_yaw_reg.gyro = (g_data[data_flg][14] << 8 | g_data[data_flg][13]) * -1;
         g_yaw_reg.angle = ((g_data[data_flg][8] << 8 | g_data[data_flg][7])) * -1;
-        float acc_x = (float)(g_data[data_flg][16] << 8 | g_data[data_flg][15]) / 1000.0f;
-        float acc_y= (float)(g_data[data_flg][18] << 8 | g_data[data_flg][17]) / 1000.0f;
+        int16_t acc16_x = static_cast<int16_t>(g_data[data_flg][18] << 8 | g_data[data_flg][17]);
+        int16_t acc16_y = static_cast<int16_t>(g_data[data_flg][16] << 8 | g_data[data_flg][15]);
+        float acc_x = (float)(acc16_x) / 100.0f;
+        float acc_y = (float)(acc16_y) / 100.0f;
         g_yaw_reg.acc_angle = static_cast<int8_t>(atan2f(acc_y, acc_x) * (127 / M_PI));
         g_yaw_reg.acc = static_cast<int16_t>(sqrtf(acc_x*acc_x + acc_y*acc_y) * 100);
 
