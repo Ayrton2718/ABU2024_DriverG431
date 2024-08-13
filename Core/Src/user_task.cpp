@@ -57,7 +57,7 @@ void UserTask_setup(void)
             break;
         }
         CSLed_err();
-        HAL_Delay(1);
+        HAL_Delay(10);
     }
     if(is_success == false){
         NVIC_SystemReset();
@@ -71,12 +71,12 @@ void UserTask_setup(void)
             break;
         }
         CSLed_err();
-        CSTimer_delayUs(10);
+        HAL_Delay(10);
     }
     if(is_success == false){
         NVIC_SystemReset();
     }
-    CSTimer_delayUs(100);
+    HAL_Delay(100);
 
     is_success = false;
     for (size_t i = 0; i < 20; i++) {
@@ -85,7 +85,7 @@ void UserTask_setup(void)
             break;
         }
         CSLed_err();
-        CSTimer_delayUs(10);
+        HAL_Delay(10);
     }
     if(is_success == false){
         NVIC_SystemReset();
