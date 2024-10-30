@@ -1,0 +1,3 @@
+/home/nwrc/STM32CubeIDE/workspace_1.15.0/ABU2024_DriverG431/CMakeFiles/ABU2024_DriverG431.dir
+/home/nwrc/STM32CubeIDE/workspace_1.15.0/ABU2024_DriverG431/CMakeFiles/edit_cache.dir
+/home/nwrc/STM32CubeIDE/workspace_1.15.0/ABU2024_DriverG431/CMakeFiles/rebuild_cache.dir

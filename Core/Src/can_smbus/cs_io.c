@@ -160,7 +160,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, data) == HAL_OK)
         {
             uint32_t can_id = RxHeader.Identifier;
-            uint8_t len = RxHeader.DataLength >> 16;
+            uint8_t len = RxHeader.DataLength;
 
             if(CSTYPE_IS_M2S_PACKET(can_id))
             {

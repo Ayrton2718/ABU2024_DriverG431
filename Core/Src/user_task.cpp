@@ -1,7 +1,7 @@
 #include "user_task.h"
 #include "can_smbus/can_smbus.hpp"
 
-#define PWM_HANDLE ((&htim1))
+#define PWM_HANDLE ((&htim3))
 
 extern "C" {
 
@@ -18,6 +18,7 @@ static void UserTask_timerCallback(void);
 // You have to change here to flipping buff.
 static sky_t g_sky1;
 static sky_t g_sky2;
+static sky_t g_sky3;
 static bool g_order_flg;
 static bool g_prog_mode;
 
@@ -28,12 +29,15 @@ void UserTask_setup(void)
 {
     HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(PWM_HANDLE, TIM_CHANNEL_3);
 
     __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
     __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+    __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_3, 1000);
 
     g_sky1.duty = 0;
     g_sky2.duty = 0;
+    g_sky3.duty = 0;
     g_order_flg = false;
     
     g_prog_mode = true;
@@ -59,8 +63,10 @@ void UserTask_loop(void)
     {
         g_sky1.duty = 0;
         g_sky2.duty = 0;
+        g_sky3.duty = 0;
         __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
         __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+        __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_3, 1000);
         
         g_rst_flg = false;
     }
@@ -76,14 +82,17 @@ void UserTask_unsafeLoop(void)
         {
             __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 2000);
             __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 2000);
+            __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_3, 2000);
         }else{
             __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
             __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+            __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_3, 1000);
         }
         CSLed_err();
     }else{
         __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_1, 1000);
         __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, 1000);
+        __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_3, 1000);
         CSTimer_start(&g_tim);
         CSId_process(1);
     }
@@ -107,6 +116,13 @@ static CSType_bool_t UserTask_canCallback(CSReg_t reg, const uint8_t* data, size
         g_sky2 = *((const sky_t*)data);
         uint16_t set_duty = ((uint32_t)g_sky2.duty * 1000 / 255) + 1000;
         __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_2, set_duty);
+        g_order_flg = true;
+        return CSTYPE_TRUE;
+    }else if((reg == CSReg_2) && (len == sizeof(sky_t)))
+    {
+        g_sky3 = *((const sky_t*)data);
+        uint16_t set_duty = ((uint32_t)g_sky3.duty * 1000 / 255) + 1000;
+        __HAL_TIM_SET_COMPARE(PWM_HANDLE, TIM_CHANNEL_3, set_duty);
         g_order_flg = true;
         return CSTYPE_TRUE;
     }
